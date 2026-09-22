@@ -1,0 +1,1 @@
+pyinstaller --onefile --add-data "app;app" --hidden-import engineio.async_drivers.threading --hidden-import engineio.async_drivers.eventlet run.py
