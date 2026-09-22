@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{ error_code|default('404') }} — Akses Dibatasi | Haisen Photo Booth</title>
+    <!-- Outfit & Space Grotesk Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .font-mono-code { font-family: 'Space Grotesk', monospace; }
+        
+        #bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%) scale(1.08);
+            object-fit: cover;
+            filter: blur(18px) brightness(0.45) contrast(1.15);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .cinematic-vignette {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(10, 15, 30, 0.5) 0%, rgba(3, 7, 18, 0.94) 85%, #030712 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        .cinematic-scanlines {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(rgba(18, 16, 38, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+            background-size: 100% 4px;
+            z-index: 2;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .luxury-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.7), 0 0 40px -10px rgba(99, 102, 241, 0.2);
+        }
+        .neon-glow-red {
+            text-shadow: 0 0 35px rgba(244, 63, 94, 0.6), 0 0 80px rgba(225, 29, 72, 0.3);
+        }
+        .neon-glow-amber {
+            text-shadow: 0 0 35px rgba(245, 158, 11, 0.6), 0 0 80px rgba(217, 119, 6, 0.3);
+        }
+        @keyframes subtle-float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-subtle-float {
+            animation: subtle-float 5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-[#030712] text-white min-h-screen flex flex-col justify-between p-6 sm:p-12 select-none relative overflow-hidden antialiased">
+
+    <!-- 0. BACKGROUND VIDEO SINEMATIK BLUR -->
+    <video id="bg-video" autoplay loop muted playsinline>
+        <source src="{{ url_for('static', filename='video/20260922-0728-41.0298756.mp4') }}" type="video/mp4">
+    </video>
+    <div class="cinematic-vignette"></div>
+    <div class="cinematic-scanlines"></div>
+
+    <!-- Top Header -->
+    <header class="w-full max-w-5xl mx-auto flex items-center justify-between pb-4 border-b border-white/10 z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-rose-500/20 backdrop-blur-md border border-rose-500/40 flex items-center justify-center text-rose-400 font-black text-lg shadow-lg">
+                !
+            </div>
+            <div>
+                <h1 class="text-sm font-black tracking-widest uppercase text-white/90">HAISEN SECURITY SYSTEM</h1>
+                <p class="text-[11px] font-medium tracking-wider text-rose-300/70 font-mono-code uppercase">Access Control & Protection</p>
+            </div>
+        </div>
+
+        <span class="px-4 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold tracking-wider uppercase font-mono-code flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+            BLOCKED ACCESS
+        </span>
+    </header>
+
+    <!-- Main Content Box -->
+    <main class="w-full max-w-xl mx-auto my-auto py-8 z-10 text-center animate-subtle-float">
+        <div class="luxury-card rounded-[36px] p-8 sm:p-12 space-y-6">
+            
+            <!-- Error Code Display -->
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full {% if error_code == '403' %}bg-rose-500/15 border border-rose-400/30 text-rose-300{% else %}bg-indigo-500/15 border border-indigo-400/30 text-indigo-300{% endif %} text-xs font-black tracking-widest uppercase font-mono-code">
+                <span>ERROR CODE: {{ error_code|default('404') }}</span>
+            </div>
+
+            <!-- Big Glowing Heading -->
+            <h2 class="font-mono-code text-7xl sm:text-8xl font-black tracking-tight leading-none {% if error_code == '403' %}text-rose-400 neon-glow-red{% else %}text-indigo-400 neon-glow-amber{% endif %}">
+                {{ error_code|default('404') }}
+            </h2>
+
+            <div class="space-y-2">
+                <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    {{ title|default('Halaman Tidak Ditemukan') }}
+                </h3>
+                <p class="text-sm sm:text-base text-white/60 max-w-md mx-auto leading-relaxed">
+                    {{ message|default('Tautan yang Anda tuju tidak tersedia, telah dihapus, atau diblokir oleh sistem keamanan photobooth.') }}
+                </p>
+            </div>
+
+            <!-- Path Warning Info -->
+            <div class="bg-black/40 p-4 rounded-2xl border border-white/10 font-mono-code text-xs text-white/50 text-left space-y-1">
+                <div class="flex items-center justify-between text-[11px] text-white/40 pb-1 border-b border-white/5">
+                    <span>TARGET PATH</span>
+                    <span>ACTION TAKEN</span>
+                </div>
+                <div class="flex items-center justify-between pt-1">
+                    <span class="text-rose-300 font-bold truncate max-w-[260px]">{{ request.path }}</span>
+                    <span class="text-amber-400 font-semibold uppercase">Access Rejected</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="/" class="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-2xl text-xs font-black tracking-wider transition active:scale-95 shadow-xl shadow-indigo-600/30 border border-indigo-400/30 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span>KEMBALI KE LAYAR BOOTH</span>
+                </a>
+                <a href="/admin/login" class="w-full sm:w-auto px-6 py-3.5 bg-white/10 hover:bg-white/15 text-white/80 rounded-2xl text-xs font-bold border border-white/15 transition active:scale-95 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    <span>LOGIN OPERATOR</span>
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Bottom Footer -->
+    <footer class="w-full max-w-5xl mx-auto flex items-center justify-between text-xs text-white/40 pt-4 border-t border-white/10 z-10">
+        <p>© 2024 Haisen Self Photo Booth • Security Firewall Active</p>
+        <span class="font-mono-code text-white/40">IP: {{ request.remote_addr }}</span>
+    </footer>
+
+</body>
+</html>

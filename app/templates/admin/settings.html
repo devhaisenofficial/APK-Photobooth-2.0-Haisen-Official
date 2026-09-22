@@ -1,0 +1,244 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Pengaturan Sistem{% endblock %}
+{% block page_title %}Pengaturan Sistem Photobooth{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-3xl">
+    <!-- Header -->
+    <div>
+        <h2 class="text-lg font-bold text-gray-900 tracking-tight">Konfigurasi Perangkat & Sistem</h2>
+        <p class="text-xs text-gray-500">Kelola kamera aktif, mode output foto, integrasi penyimpanan, dan pemeliharaan data.</p>
+    </div>
+
+    <!-- Form Utama Pengaturan -->
+    <form method="POST" class="space-y-6">
+        <!-- Section 1: Kamera -->
+        <div class="glass-card p-6 rounded-3xl border border-gray-100/80 shadow-sm bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </div>
+                    <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Perangkat Kamera Aktif</h3>
+                </div>
+                <button type="button" onclick="detectCameras()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 flex items-center gap-1.5 transition">
+                    <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Pindai Kamera
+                </button>
+            </div>
+
+            <!-- Dropdown Kamera Terdeteksi -->
+            <div>
+                <label class="text-xs font-semibold text-gray-700 block mb-1.5">Pilih Kamera Terdeteksi</label>
+                <select id="camera-select" onchange="onCameraDropdownChange(this.value)" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition">
+                    <option value="{{ camera_index }}">Gunakan Indeks {{ camera_index }} (Tersimpan Saat Ini)</option>
+                </select>
+            </div>
+
+            <!-- Manual Input & Test Button -->
+            <div class="flex items-center gap-3">
+                <div class="flex-1">
+                    <label class="text-[11px] font-medium text-gray-500 block mb-1">Index Kamera (Manual Override)</label>
+                    <input type="number" name="camera_index" id="camera_index_input" value="{{ camera_index }}" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition" placeholder="0">
+                </div>
+                <div class="pt-5">
+                    <button type="button" onclick="testSelectedCamera()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Uji Kamera
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feedback Alert Uji Kamera -->
+            <div id="camera-test-result" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+        </div>
+
+        <!-- Section 2: Branding & Mode Output -->
+        <div class="glass-card p-6 rounded-3xl border border-gray-100/80 shadow-sm bg-white space-y-4">
+            <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                </div>
+                <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Branding & Format Output Foto</h3>
+            </div>
+
+            <div>
+                <label class="text-xs font-semibold text-gray-700 block mb-1.5">Teks Watermark Bawaan</label>
+                <input type="text" name="watermark_text" value="{{ watermark_text }}" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition" placeholder="Contoh: HAISEN OFFICIAL">
+                <p class="text-[10px] text-gray-400 mt-1">Dicetak pada footer template standar jika bingkai tidak menutupi.</p>
+            </div>
+
+            <!-- Mode Simpan Output -->
+            <div>
+                <label class="text-xs font-semibold text-gray-700 block mb-2">Mode Penyimpanan Hasil Foto</label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <label class="flex items-center gap-2 p-3 rounded-xl border {% if output_mode == 'both' %}border-indigo-600 bg-indigo-50/30 text-indigo-900{% else %}border-gray-200 text-gray-700{% endif %} cursor-pointer text-xs font-medium">
+                        <input type="radio" name="output_mode" value="both" {% if output_mode == 'both' %}checked{% endif %} class="text-indigo-600 focus:ring-indigo-500">
+                        <span>Keduanya (Rekomendasi)</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-3 rounded-xl border {% if output_mode == 'template' %}border-indigo-600 bg-indigo-50/30 text-indigo-900{% else %}border-gray-200 text-gray-700{% endif %} cursor-pointer text-xs font-medium">
+                        <input type="radio" name="output_mode" value="template" {% if output_mode == 'template' %}checked{% endif %} class="text-indigo-600 focus:ring-indigo-500">
+                        <span>Hanya Hasil Template</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-3 rounded-xl border {% if output_mode == 'photo' %}border-indigo-600 bg-indigo-50/30 text-indigo-900{% else %}border-gray-200 text-gray-700{% endif %} cursor-pointer text-xs font-medium">
+                        <input type="radio" name="output_mode" value="photo" {% if output_mode == 'photo' %}checked{% endif %} class="text-indigo-600 focus:ring-indigo-500">
+                        <span>Hanya Foto Mentah</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Toggle GIF -->
+            <div class="pt-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" name="enable_gif" value="1" {% if enable_gif == '1' %}checked{% endif %} class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                    <div>
+                        <span class="text-xs font-semibold text-gray-800">Aktifkan Pembuatan Animasi GIF Sesi</span>
+                        <p class="text-[10px] text-gray-400">Menghasilkan file animasi singkat dari rangkaian foto yang diambil.</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Section 3: Integrasi Cloud -->
+        <div class="glass-card p-6 rounded-3xl border border-gray-100/80 shadow-sm bg-white space-y-4">
+            <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+                </div>
+                <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Penyimpanan Cloud (Google Drive)</h3>
+            </div>
+
+            <div>
+                <label class="text-xs font-semibold text-gray-700 block mb-1.5">Google Drive Folder ID (Opsional)</label>
+                <input type="text" name="gdrive_folder_id" value="{{ gdrive_folder_id }}" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition" placeholder="Contoh: 1a2B3c4D5e6F7g8H9i0J">
+                <p class="text-[10px] text-gray-400 mt-1">ID folder dari tautan Google Drive untuk upload backup otomatis jika dikonfigurasi.</p>
+            </div>
+        </div>
+
+        <!-- Tombol Simpan Konfigurasi -->
+        <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold transition shadow-lg shadow-indigo-600/20 active:scale-98 flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Simpan Seluruh Pengaturan
+        </button>
+    </form>
+
+    <!-- Section 4: Zona Bahaya / Reset All Data -->
+    <div class="glass-card p-6 rounded-3xl border border-red-200/80 shadow-sm bg-red-50/30 space-y-4">
+        <div class="flex items-center gap-2.5 pb-3 border-b border-red-100">
+            <div class="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div>
+                <h3 class="text-xs font-bold text-red-900 uppercase tracking-wider">Zona Bahaya (Danger Zone)</h3>
+                <p class="text-[11px] text-red-600">Aksi ini tidak dapat dibatalkan dan akan menghapus seluruh data photobooth.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
+            <div>
+                <h4 class="text-xs font-bold text-gray-900">Reset Semua Data Sesi & Galeri</h4>
+                <p class="text-[11px] text-gray-500">Menghapus seluruh riwayat sesi di database dan membersihkan file foto (collages & temp).</p>
+            </div>
+            <button type="button" onclick="confirmResetAllData()" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm transition active:scale-95 whitespace-nowrap">
+                Hapus Semua Data
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function detectCameras() {
+    const select = document.getElementById('camera-select');
+    select.innerHTML = '<option value="">Memindai perangkat kamera...</option>';
+
+    fetch('/admin/api/cameras')
+        .then(res => res.json())
+        .then(data => {
+            select.innerHTML = '';
+            if (!data.cameras || data.cameras.length === 0) {
+                select.innerHTML = '<option value="0">Tidak ada kamera terdeteksi (Gunakan Index 0)</option>';
+                return;
+            }
+            data.cameras.forEach(cam => {
+                const opt = document.createElement('option');
+                opt.value = cam.index;
+                opt.text = `${cam.label} - Resolusi: ${cam.resolution}`;
+                if (cam.index == document.getElementById('camera_index_input').value) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+        })
+        .catch(err => {
+            select.innerHTML = '<option value="0">Gagal memindai kamera</option>';
+            console.error(err);
+        });
+}
+
+function onCameraDropdownChange(val) {
+    if (val !== '') {
+        document.getElementById('camera_index_input').value = val;
+    }
+}
+
+function testSelectedCamera() {
+    const idx = document.getElementById('camera_index_input').value;
+    const resDiv = document.getElementById('camera-test-result');
+    resDiv.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-700', 'bg-red-50', 'text-red-700');
+    resDiv.classList.add('bg-gray-100', 'text-gray-700');
+    resDiv.innerText = `Menguji koneksi kamera ${idx}...`;
+
+    fetch('/admin/api/test-camera', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index: idx })
+    })
+    .then(res => res.json())
+    .then(data => {
+        resDiv.classList.remove('bg-gray-100', 'text-gray-700');
+        if (data.success) {
+            resDiv.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+            resDiv.innerHTML = `<strong>Kamera Aktif & Siap!</strong> ${data.message}`;
+        } else {
+            resDiv.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
+            resDiv.innerHTML = `<strong>Gagal Membuka Kamera:</strong> ${data.message}`;
+        }
+    })
+    .catch(err => {
+        resDiv.classList.remove('bg-gray-100', 'text-gray-700');
+        resDiv.classList.add('bg-red-50', 'text-red-700');
+        resDiv.innerText = 'Terjadi kesalahan jaringan saat menguji kamera.';
+    });
+}
+
+function confirmResetAllData() {
+    const confirmation = prompt('PERINGATAN: Semua riwayat sesi dan file foto hasil photobooth akan dihapus secara permanen.\n\nKetik "RESET" untuk mengonfirmasi:');
+    if (confirmation === 'RESET') {
+        fetch('/admin/api/reset-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Semua data dan file foto berhasil direset.');
+                window.location.reload();
+            } else {
+                alert('Gagal mereset data: ' + data.message);
+            }
+        })
+        .catch(err => {
+            alert('Kesalahan saat melakukan reset data.');
+            console.error(err);
+        });
+    } else if (confirmation !== null) {
+        alert('Konfirmasi dibatalkan. Kata kunci tidak sesuai.');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    detectCameras();
+});
+</script>
+{% endblock %}

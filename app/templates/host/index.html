@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haisen Photo Booth — Host Screen</title>
+    <!-- Outfit & Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QRCode.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Socket.IO Client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Outfit', sans-serif; 
+        }
+        .font-mono-code {
+            font-family: 'Space Grotesk', monospace;
+        }
+        /* Video Background Styling */
+        #bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%) scale(1.08);
+            object-fit: cover;
+            filter: blur(14px) brightness(0.62) contrast(1.15);
+            z-index: 0;
+            pointer-events: none;
+        }
+        /* Dark Gradient & Vignette Overlays */
+        .cinematic-vignette {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(10, 15, 30, 0.4) 0%, rgba(3, 7, 18, 0.88) 85%, #030712 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        .cinematic-scanlines {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(rgba(18, 16, 38, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 2;
+            opacity: 0.35;
+            pointer-events: none;
+        }
+        /* Floating Soft Glow Effect */
+        .neon-glow-primary {
+            text-shadow: 0 0 30px rgba(99, 102, 241, 0.5), 0 0 60px rgba(99, 102, 241, 0.25);
+        }
+        .neon-glow-pin {
+            text-shadow: 0 0 35px rgba(129, 140, 248, 0.6), 0 0 80px rgba(99, 102, 241, 0.35);
+        }
+        .floating-qr {
+            box-shadow: 0 20px 60px -15px rgba(99, 102, 241, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.15);
+        }
+        @keyframes subtle-float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-subtle-float {
+            animation: subtle-float 6s ease-in-out infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .animate-pulse-ring {
+            animation: pulse-ring 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col justify-between overflow-hidden relative select-none antialiased">
+
+    <!-- 0. BACKGROUND VIDEO DENGAN BLUR & OVERLAYS SINEMATIK -->
+    <video id="bg-video" autoplay loop muted playsinline>
+        <source src="{{ url_for('static', filename='video/20260922-0728-41.0298756.mp4') }}" type="video/mp4">
+    </video>
+    <div class="cinematic-vignette"></div>
+    <div class="cinematic-scanlines"></div>
+
+    <!-- 1. STANDBY / PAIRING SCREEN (FRAMELESS, SLEEK, TANPA BOX KAKU) -->
+    <div id="standby-screen" class="relative z-10 flex flex-col justify-between min-h-screen p-8 sm:p-14 transition-all duration-700">
+        
+        <!-- Top Branding Bar -->
+        <header class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 backdrop-blur-md border border-indigo-500/40 flex items-center justify-center text-indigo-400 font-black text-lg shadow-lg">
+                    H
+                </div>
+                <div>
+                    <h2 class="text-sm font-black tracking-widest uppercase text-white/90">HAISEN BOOTH</h2>
+                    <p class="text-[11px] font-medium tracking-wider text-indigo-300/70 uppercase">Self Photo Studio Official 2.0</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/80 text-xs font-semibold">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>Standby • Ready</span>
+            </div>
+        </header>
+
+        <!-- Center Content: Frameless Hero Section -->
+        <main class="max-w-6xl mx-auto w-full my-auto py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+                
+                <!-- Sisi Kiri: Tipografi & Petunjuk Besar -->
+                <div class="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-indigo-300 text-xs font-bold tracking-widest uppercase">
+                        <svg class="w-3.5 h-3.5 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>PERDANA LAUNCHING!</span>
+                    </div>
+
+                    <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.08] neon-glow-primary">
+                        Siap Mengabadikan <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-indigo-100 to-purple-300">
+                            Momen Terbaikmu?
+                        </span>
+                    </h1>
+
+                    <p class="text-base sm:text-lg text-white/70 max-w-xl font-normal leading-relaxed">
+                        Pindai QR Code menggunakan kamera ponsel Anda untuk mengontrol filter, memilih bingkai, dan menekan shutter secara nirkabel.
+                    </p>
+
+                    <!-- Kode PIN Raksasa (Frameless, Glow) -->
+                    <div class="pt-2 flex flex-col sm:flex-row items-center gap-5">
+                        <div class="flex flex-col items-center sm:items-start">
+                            <span class="text-[11px] font-bold tracking-widest uppercase text-white/40 mb-1">
+                                Atau Ketik Kode PIN Sesi
+                            </span>
+                            <div class="font-mono-code text-5xl sm:text-6xl font-black tracking-wider text-indigo-300 neon-glow-pin flex items-center gap-1">
+                                <span>#</span><span>{{ code }}</span>
+                            </div>
+                        </div>
+                        <div class="hidden sm:block h-12 w-px bg-white/10"></div>
+                        <div class="text-xs text-white/50 max-w-[200px] text-center sm:text-left leading-snug">
+                            Koneksikan ponsel ke Wi-Fi booth yang sama untuk respon instan.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sisi Kanan: Floating Seamless QR Card -->
+                <div class="lg:col-span-5 flex flex-col items-center justify-center">
+                    <div class="relative animate-subtle-float">
+                        <!-- Soft Ambient Glow Aura di Belakang QR -->
+                        <div class="absolute -inset-4 bg-gradient-to-r from-indigo-500/30 to-purple-600/30 rounded-[44px] blur-2xl opacity-75"></div>
+                        
+                        <!-- Floating QR Container (Tanpa Kotak Kaku) -->
+                        <div class="relative bg-white/[0.08] backdrop-blur-2xl p-6 sm:p-8 rounded-[36px] border border-white/20 floating-qr flex flex-col items-center">
+                            <!-- Label Ringkas di Atas QR -->
+                            <div class="flex items-center gap-2 mb-5 px-3 py-1 rounded-full bg-white/10 text-[11px] font-bold text-indigo-200 uppercase tracking-wider">
+                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                                <span>Scan QR Code</span>
+                            </div>
+
+                            <!-- QR Code White Island -->
+                            <div class="p-4 bg-white rounded-2xl shadow-2xl">
+                                <div id="qrcode" class="flex items-center justify-center"></div>
+                            </div>
+
+                            <!-- Pulse Status di Bawah QR -->
+                            <div class="flex items-center gap-2.5 mt-5 text-xs font-semibold text-white/80">
+                                <span class="relative flex h-2.5 w-2.5">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+                                </span>
+                                <span>Menunggu koneksi dari HP...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Bottom Footer Info -->
+        <footer class="flex flex-col sm:flex-row items-center justify-between text-xs text-white/40 pt-6 border-t border-white/10 gap-3">
+            <div class="flex items-center gap-2">
+                <span>© 2024 Haisen Self Photo Studio</span>
+                <span>•</span>
+                <span>All Rights Reserved</span>
+            </div>
+            <div class="flex items-center gap-4 text-white/50 font-mono-code">
+                <span>SESI: #{{ code }}</span>
+                <span>IP HOST: {{ request.host }}</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- 2. LIVE CAMERA DISPLAY (Tampil saat HP terhubung - Frameless Sinematik) -->
+    <div id="camera-screen" class="hidden absolute inset-0 w-full h-full z-20 flex flex-col items-center justify-center transition-all duration-700 bg-black/95">
+        
+        <!-- Top Status Bar Floating -->
+        <div class="absolute top-6 left-8 right-8 flex items-center justify-between z-30 pointer-events-none">
+            <div class="flex items-center gap-3 bg-white/10 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/15 text-white shadow-2xl">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="host-status-text" class="text-xs font-bold tracking-wide">Ponsel Terhubung • Atur Filter & Tekan Shutter di HP</span>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/15 text-white text-xs font-mono-code font-bold tracking-wider shadow-2xl">
+                PIN: #{{ code }}
+            </div>
+        </div>
+
+        <!-- Fullscreen / Borderless Stream Viewport -->
+        <div class="w-full h-full flex items-center justify-center relative overflow-hidden">
+            <img id="video-stream" src="{{ url_for('host.video_feed') }}" class="w-full h-full object-cover" alt="Live Camera Stream">
+
+            <!-- Overlay Hitung Mundur Raksasa Sinematik -->
+            <div id="countdown-overlay" class="hidden absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center text-white z-30">
+                <div id="countdown-number" class="text-[16rem] font-black tracking-tighter leading-none animate-pulse-ring drop-shadow-[0_0_50px_rgba(255,255,255,0.8)]">3</div>
+                <div id="shot-indicator" class="text-lg font-black tracking-widest uppercase text-indigo-300 mt-4 bg-white/10 backdrop-blur-md px-8 py-2.5 rounded-full border border-white/20 shadow-2xl">
+                    Foto 1 dari 4
+                </div>
+            </div>
+
+            <!-- Overlay Flash Jepretan Putih Murni -->
+            <div id="flash-overlay" class="hidden absolute inset-0 bg-white z-40 transition-opacity duration-300"></div>
+
+            <!-- Overlay Sedang Memproses Kolase -->
+            <div id="processing-overlay" class="hidden absolute inset-0 bg-black/85 backdrop-blur-xl flex flex-col items-center justify-center text-white z-40 space-y-5">
+                <div class="w-20 h-20 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                <h3 class="text-2xl font-black text-white tracking-wide">Sedang Merangkai Kolase Foto...</h3>
+                <p class="text-sm text-white/60 font-medium">Harap tunggu sebentar, foto Anda sedang disatukan ke template.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIKA, WEBSOCKET, & AUDIO -->
+    <script>
+        // 1. Render Floating QR Code
+        const mobileUrl = "{{ mobile_url }}";
+        new QRCode(document.getElementById("qrcode"), {
+            text: mobileUrl,
+            width: 175,
+            height: 175,
+            colorDark: "#0f172a",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // 2. Audio Beep Synthesizer menggunakan Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(freq = 880, duration = 0.15) {
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log("Audio play error", e);
+            }
+        }
+
+        // 3. Pastikan Video Loop Mulus & Autoplay
+        const bgVideo = document.getElementById('bg-video');
+        if (bgVideo) {
+            bgVideo.play().catch(() => {
+                // Browser policy fallback jika perlu user gesture
+                document.body.addEventListener('click', () => {
+                    bgVideo.play();
+                }, { once: true });
+            });
+        }
+
+        // 4. Socket.IO Connection & Events
+        const socket = io();
+        const currentCode = "{{ code }}";
+
+        socket.on('connect', () => {
+            console.log("Host WebSocket terkoneksi.");
+        });
+
+        // Event HP Terhubung
+        socket.on('device_paired', function(data) {
+            if (data.code === currentCode) {
+                playBeep(587, 0.2);
+                setTimeout(() => playBeep(880, 0.3), 150);
+
+                const standby = document.getElementById('standby-screen');
+                const camera = document.getElementById('camera-screen');
+
+                standby.style.opacity = '0';
+                setTimeout(() => {
+                    standby.classList.add('hidden');
+                    camera.classList.remove('hidden');
+                }, 500);
+            }
+        });
+
+        // Event Countdown
+        let countdownTimerId = null;
+        socket.on('trigger_countdown', function(data) {
+            if (data.code === currentCode) {
+                const overlay = document.getElementById('countdown-overlay');
+                const numberEl = document.getElementById('countdown-number');
+                const indicatorEl = document.getElementById('shot-indicator');
+
+                indicatorEl.innerText = `Foto ${data.shot} dari ${data.total}`;
+                overlay.classList.remove('hidden');
+
+                let timeLeft = data.timer;
+                numberEl.innerText = timeLeft;
+                playBeep(800, 0.15);
+
+                if (countdownTimerId) clearInterval(countdownTimerId);
+
+                countdownTimerId = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft > 0) {
+                        numberEl.innerText = timeLeft;
+                        playBeep(800, 0.15);
+                    } else {
+                        clearInterval(countdownTimerId);
+                        playBeep(1400, 0.35); // Beep shutter
+                    }
+                }, 1000);
+            }
+        });
+
+        // Event Shot Completed (Flash effect)
+        socket.on('shot_completed', function(data) {
+            if (data.code === currentCode) {
+                const countdownOverlay = document.getElementById('countdown-overlay');
+                countdownOverlay.classList.add('hidden');
+
+                const flash = document.getElementById('flash-overlay');
+                flash.classList.remove('hidden');
+                flash.style.opacity = '1';
+
+                setTimeout(() => {
+                    flash.style.opacity = '0';
+                    setTimeout(() => flash.classList.add('hidden'), 250);
+                }, 100);
+
+                document.getElementById('host-status-text').innerText = `Foto ${data.shot} dari ${data.total} selesai diambil!`;
+            }
+        });
+
+        // Event Processing Collage
+        socket.on('processing_collage', function(data) {
+            if (data.code === currentCode) {
+                document.getElementById('countdown-overlay').classList.add('hidden');
+                document.getElementById('processing-overlay').classList.remove('hidden');
+            }
+        });
+
+        // Event Sesi Selesai -> Redirect ke Galeri Kios Booth
+        socket.on('session_finished', function(data) {
+            if (data.code === currentCode) {
+                window.location.href = data.redirect_url + '?from=host';
+            }
+        });
+    </script>
+</body>
+</html>

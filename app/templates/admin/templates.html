@@ -1,0 +1,167 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Manajemen Template{% endblock %}
+{% block page_title %}Manajemen Template & Bingkai{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header Summary & Quick Action -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-lg font-bold text-gray-900 tracking-tight">Koleksi Bingkai & Template</h2>
+            <p class="text-xs text-gray-500">Kelola bingkai photobooth, atur template aktif, atau klik tanda (+) untuk mengunggah template baru.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="openUploadModal()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm hover:shadow transition-all active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                Unggah Template Baru
+            </button>
+        </div>
+    </div>
+
+    <!-- Grid Template Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        <!-- Card 1: Tombol Upload (+) Prominen -->
+        <div onclick="openUploadModal()" class="border-2 border-dashed border-gray-300 hover:border-indigo-500 hover:bg-indigo-50/20 rounded-3xl p-6 flex flex-col items-center justify-center min-h-[300px] cursor-pointer transition-all duration-200 group text-center">
+            <div class="w-14 h-14 rounded-2xl bg-indigo-50 group-hover:bg-indigo-600 text-indigo-600 group-hover:text-white flex items-center justify-center transition-all duration-200 shadow-sm mb-3">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            </div>
+            <h4 class="text-sm font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">Tambah Template</h4>
+            <p class="text-[11px] text-gray-400 mt-1 max-w-[160px]">Format PNG transparan atau JPG beresolusi tinggi</p>
+        </div>
+
+        <!-- Custom Uploaded Templates -->
+        {% for tpl in templates %}
+        <div class="glass-card rounded-3xl p-4 flex flex-col justify-between border {% if active_template == tpl.filename %}border-indigo-500 ring-2 ring-indigo-500/20 shadow-md{% else %}border-gray-100/80 hover:shadow-md{% endif %} transition-all">
+            <div>
+                <div class="aspect-[3/4] bg-gray-50 rounded-2xl overflow-hidden relative mb-3 border border-gray-200/50 flex items-center justify-center">
+                    <img src="{{ url_for('static', filename='uploads/templates/' + tpl.filename) }}" class="w-full h-full object-contain p-2" alt="{{ tpl.filename }}" loading="lazy">
+                    {% if active_template == tpl.filename %}
+                    <span class="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-indigo-600 text-white text-[10px] font-bold shadow-sm">Aktif</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="max-w-[140px]">
+                        <h4 class="text-xs font-bold text-gray-900 truncate" title="{{ tpl.filename }}">{{ tpl.filename }}</h4>
+                        <span class="text-[10px] text-gray-400 font-mono">{{ tpl.size }} KB</span>
+                    </div>
+                    <a href="{{ url_for('admin.editor_panel') }}?tpl={{ tpl.filename }}" class="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors" title="Atur Slot Foto di Editor">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2">
+                {% if active_template != tpl.filename %}
+                <form method="POST" class="flex-1">
+                    <input type="hidden" name="action" value="set_active">
+                    <input type="hidden" name="active_template" value="{{ tpl.filename }}">
+                    <button type="submit" class="w-full py-2 rounded-xl bg-gray-900 hover:bg-black text-white text-[11px] font-bold transition-colors">
+                        Aktifkan
+                    </button>
+                </form>
+                {% else %}
+                <span class="flex-1 text-center py-2 text-indigo-600 text-[11px] font-bold bg-indigo-50 rounded-xl">Sedang Aktif</span>
+                {% endif %}
+
+                <!-- Tombol Hapus -->
+                <form method="POST" onsubmit="return confirm('Hapus template ini secara permanen?')" class="flex-shrink-0">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="filename" value="{{ tpl.filename }}">
+                    <button type="submit" class="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Hapus Template">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal Popup Upload Template Baru -->
+<div id="upload-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl flex flex-col border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                </div>
+                <h3 class="text-sm font-bold text-gray-900">Unggah Template Baru</h3>
+            </div>
+            <button onclick="closeUploadModal()" class="w-8 h-8 rounded-full hover:bg-gray-200/60 text-gray-400 hover:text-gray-700 flex items-center justify-center transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Form Upload -->
+        <form method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+            <input type="hidden" name="action" value="upload">
+
+            <!-- Live Preview Box -->
+            <div id="preview-container" class="hidden aspect-[3/4] max-h-64 bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 flex items-center justify-center relative">
+                <img id="upload-preview-img" src="" class="w-full h-full object-contain" alt="Preview Template">
+                <button type="button" onclick="clearUploadPreview()" class="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-black transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Dropzone Area -->
+            <div id="dropzone-area" class="border-2 border-dashed border-gray-200 hover:border-indigo-500 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-gray-50/50 hover:bg-indigo-50/20" onclick="document.getElementById('template-file-input').click()">
+                <svg class="w-10 h-10 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <p class="text-xs font-semibold text-gray-700">Klik untuk memilih file bingkai</p>
+                <p class="text-[11px] text-gray-400 mt-1">Mendukung PNG transparan, JPG, atau WEBP</p>
+            </div>
+
+            <input id="template-file-input" type="file" name="template_file" accept=".png, .jpg, .jpeg, .webp" class="hidden" onchange="handleFileSelect(event)" required>
+
+            <div class="pt-2 flex items-center gap-3">
+                <button type="button" onclick="closeUploadModal()" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-xs font-bold hover:bg-gray-50 transition-colors">
+                    Batal
+                </button>
+                <button type="submit" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors shadow-sm">
+                    Unggah & Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openUploadModal() {
+    document.getElementById('upload-modal').classList.remove('hidden');
+}
+
+function closeUploadModal() {
+    document.getElementById('upload-modal').classList.add('hidden');
+    clearUploadPreview();
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('upload-preview-img').src = e.target.result;
+            document.getElementById('preview-container').classList.remove('hidden');
+            document.getElementById('dropzone-area').classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function clearUploadPreview() {
+    document.getElementById('template-file-input').value = '';
+    document.getElementById('upload-preview-img').src = '';
+    document.getElementById('preview-container').classList.add('hidden');
+    document.getElementById('dropzone-area').classList.remove('hidden');
+}
+
+// Close when clicking outside
+document.getElementById('upload-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'upload-modal') {
+        closeUploadModal();
+    }
+});
+</script>
+{% endblock %}

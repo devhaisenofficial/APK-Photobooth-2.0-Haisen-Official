@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Haisen Remote — Kendali Photobooth</title>
+    <!-- Outfit & Space Grotesk Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Socket.IO Client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+        .font-mono-code { 
+            font-family: 'Space Grotesk', monospace; 
+        }
+        .luxury-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6), 0 0 30px -10px rgba(99, 102, 241, 0.15);
+        }
+        .neon-glow-primary {
+            text-shadow: 0 0 25px rgba(99, 102, 241, 0.6);
+        }
+        /* Custom scrollbar untuk selector template */
+        .scrollbar-none::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-none {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-[#070b14] text-white min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 select-none relative overflow-x-hidden antialiased">
+
+    <!-- Ambient Lighting Halus -->
+    <div class="fixed -top-32 -left-32 w-80 h-80 bg-indigo-600/20 rounded-full filter blur-[100px] pointer-events-none"></div>
+    <div class="fixed -bottom-32 -right-32 w-80 h-80 bg-purple-600/20 rounded-full filter blur-[100px] pointer-events-none"></div>
+
+    <!-- 1. SCREEN KADALUARSA (Expired Screen) -->
+    <div id="expired-screen" class="luxury-card rounded-[32px] p-8 max-w-sm w-full text-center z-10 {% if not is_expired %}hidden{% endif %} transition-all duration-300">
+        <div class="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-2xl mx-auto flex items-center justify-center mb-5 border border-amber-500/30 shadow-lg">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <span class="inline-block px-3 py-1 bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold rounded-full uppercase tracking-wider mb-2.5">Sesi Selesai</span>
+        <h1 class="text-xl font-black text-white tracking-tight">ID Remote Ini Sudah Kadaluarsa</h1>
+        <p class="text-xs text-white/60 mt-2 mb-7 leading-relaxed">Sesi foto dengan PIN <strong class="font-mono-code text-indigo-400" id="expired-code">#{{ code }}</strong> telah berakhir dan tidak dapat lagi digunakan untuk memicu kamera.</p>
+
+        <div class="space-y-3">
+            <a id="expired-gallery-btn" href="/gallery/{{ code }}" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-2xl text-xs font-black tracking-wider transition active:scale-95 shadow-xl shadow-indigo-600/30 border border-indigo-400/30 flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>LIHAT HASIL FOTO SAYA</span>
+            </a>
+            <button type="button" onclick="resetToPairing()" class="w-full py-3.5 bg-white/10 hover:bg-white/15 text-white/80 rounded-2xl text-xs font-bold border border-white/10 transition">
+                Gunakan PIN Lain
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. SCREEN PAIRING (Input PIN jika buka langsung) -->
+    <div id="pairing-screen" class="luxury-card rounded-[32px] p-8 max-w-sm w-full text-center z-10 {% if is_expired %}hidden{% endif %} transition-all duration-300">
+        <div class="w-14 h-14 bg-indigo-500/20 text-indigo-400 rounded-2xl mx-auto flex items-center justify-center font-black text-2xl mb-4 border border-indigo-500/40 shadow-lg">
+            H
+        </div>
+        <h1 class="text-2xl font-black text-white tracking-tight">Koneksikan Remote</h1>
+        <p class="text-xs text-white/60 mt-1 mb-6">Masukkan 4 digit kode PIN yang tampil di layar monitor booth.</p>
+
+        <form id="pairForm" class="space-y-4">
+            <div class="relative">
+                <input type="text" id="code-input" maxlength="4" placeholder="0000" inputmode="numeric" value="{{ code if not is_expired else '' }}" class="w-full text-center text-4xl font-mono-code font-black tracking-widest py-4 bg-black/40 border border-white/20 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 text-indigo-300 transition placeholder-white/20">
+            </div>
+            <button type="submit" id="pairBtn" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-2xl text-xs font-black tracking-wider transition active:scale-95 shadow-xl shadow-indigo-600/30 border border-indigo-400/30 flex items-center justify-center gap-2">
+                <span>HUBUNGKAN KE BOOTH</span>
+            </button>
+        </form>
+        <p id="error-msg" class="text-xs text-rose-400 mt-3 hidden font-semibold"></p>
+    </div>
+
+    <!-- 3. SCREEN REMOTE CONTROL (Aktif setelah pairing sukses) -->
+    <div id="remote-screen" class="luxury-card rounded-[32px] p-6 max-w-sm w-full z-10 hidden space-y-5">
+        <!-- Header Status -->
+        <div class="flex items-center justify-between pb-3.5 border-b border-white/10">
+            <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-xs font-bold text-white/90">PIN: <span id="display-code" class="font-mono-code text-indigo-300 font-black">#{{ code }}</span></span>
+            </div>
+            <span class="text-[10px] bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 px-3 py-1 rounded-full font-bold">
+                Booth Ready
+            </span>
+        </div>
+
+        <!-- 1. Pilihan Template Visual (Gambar Asli) -->
+        <div class="space-y-2">
+            <div class="flex items-center justify-between">
+                <label class="text-[11px] font-black text-white/50 uppercase tracking-wider">Pilih Bingkai Template</label>
+                <span class="text-[10px] text-indigo-300 font-semibold truncate max-w-[140px]" id="selected-template-name">{{ active_template }}</span>
+            </div>
+            
+            <div class="flex gap-3 overflow-x-auto pb-2 pt-1 -mx-1 px-1 scrollbar-none snap-x">
+                <!-- Template Default Standar -->
+                <div onclick="setTemplate('default', this)" class="template-card relative flex-shrink-0 w-24 aspect-[2/3] rounded-2xl border-2 p-1 cursor-pointer transition-all duration-200 snap-center {% if active_template == 'default' %}border-indigo-500 bg-indigo-600/20 shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-500/30{% else %}border-white/15 bg-white/5 hover:border-white/30{% endif %}" data-value="default">
+                    <div class="w-full h-full rounded-xl bg-black/40 flex flex-col items-center justify-center p-2 text-center overflow-hidden border border-white/10">
+                        <div class="w-7 h-7 rounded-lg bg-white/10 shadow-xs flex items-center justify-center text-indigo-300 mb-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <span class="text-[10px] font-black text-white leading-tight">Standar</span>
+                        <span class="text-[8px] text-white/50 font-medium">Polos</span>
+                    </div>
+                    <div class="active-badge absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-md {% if active_template != 'default' %}hidden{% endif %}">✓</div>
+                </div>
+
+                <!-- Template Kustom Gambar Nyata -->
+                {% for tpl in custom_templates %}
+                <div onclick="setTemplate('{{ tpl }}', this)" class="template-card relative flex-shrink-0 w-24 aspect-[2/3] rounded-2xl border-2 p-1 cursor-pointer transition-all duration-200 snap-center {% if active_template == tpl %}border-indigo-500 bg-indigo-600/20 shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-500/30{% else %}border-white/15 bg-white/5 hover:border-white/30{% endif %}" data-value="{{ tpl }}">
+                    <div class="w-full h-full rounded-xl bg-black/40 flex items-center justify-center overflow-hidden border border-white/10">
+                        <img src="{{ url_for('static', filename='uploads/templates/' + tpl) }}" class="w-full h-full object-contain p-0.5" alt="{{ tpl }}">
+                    </div>
+                    <div class="active-badge absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-md {% if active_template != tpl %}hidden{% endif %}">✓</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 2. Pilihan Filter Kamera -->
+        <div class="space-y-2">
+            <label class="text-[11px] font-black text-white/50 uppercase tracking-wider">Filter Warna</label>
+            <div class="grid grid-cols-3 gap-2">
+                <button type="button" onclick="setFilter('classic', this)" class="filter-btn p-3 rounded-xl border text-xs font-black transition bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30" data-value="classic">
+                    Natural
+                </button>
+                <button type="button" onclick="setFilter('bw', this)" class="filter-btn p-3 rounded-xl border text-xs font-bold transition bg-white/5 text-white/70 border-white/10 hover:border-white/20" data-value="bw">
+                    B&W
+                </button>
+                <button type="button" onclick="setFilter('vintage', this)" class="filter-btn p-3 rounded-xl border text-xs font-bold transition bg-white/5 text-white/70 border-white/10 hover:border-white/20" data-value="vintage">
+                    Vintage
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. Pilihan Timer Countdown -->
+        <div class="space-y-2">
+            <label class="text-[11px] font-black text-white/50 uppercase tracking-wider">Timer Persiapan</label>
+            <div class="grid grid-cols-3 gap-2">
+                <button type="button" onclick="setTimer(3, this)" class="timer-btn p-3 rounded-xl border text-xs font-black transition bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30" data-value="3">
+                    3 Detik
+                </button>
+                <button type="button" onclick="setTimer(5, this)" class="timer-btn p-3 rounded-xl border text-xs font-bold transition bg-white/5 text-white/70 border-white/10 hover:border-white/20" data-value="5">
+                    5 Detik
+                </button>
+                <button type="button" onclick="setTimer(10, this)" class="timer-btn p-3 rounded-xl border text-xs font-bold transition bg-white/5 text-white/70 border-white/10 hover:border-white/20" data-value="10">
+                    10 Detik
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. Tombol Shutter Utama Glowing -->
+        <div class="pt-2">
+            <button type="button" id="shutterBtn" onclick="startCapture()" class="w-full py-4 bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl text-sm font-black tracking-wider transition active:scale-95 shadow-2xl shadow-indigo-600/40 border border-indigo-400/40 flex items-center justify-center gap-2.5">
+                <svg class="w-5 h-5 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>MULAI SESI FOTO</span>
+            </button>
+            <p id="shutter-status-info" class="text-center text-[11px] text-white/40 mt-2.5 font-medium">Tekan untuk memulai jepretan otomatis di booth</p>
+        </div>
+    </div>
+
+    <!-- Script Logika & Socket -->
+    <script>
+        const socket = io();
+        let sessionCode = "{{ code }}";
+        let isExpiredInitial = {{ 'true' if is_expired else 'false' }};
+        let selectedTemplate = "{{ active_template }}";
+        let selectedFilter = "classic";
+        let selectedTimer = 3;
+
+        // Auto-pairing jika ada parameter code di URL dan belum expired
+        window.addEventListener('DOMContentLoaded', () => {
+            if (isExpiredInitial) return;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeParam = urlParams.get('code') || sessionCode;
+            if (codeParam && codeParam.trim().length === 4) {
+                document.getElementById('code-input').value = codeParam;
+                performPairing(codeParam.trim());
+            }
+        });
+
+        // Form Pairing Submit
+        document.getElementById('pairForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const code = document.getElementById('code-input').value.trim();
+            if (code.length === 4) {
+                performPairing(code);
+            } else {
+                showError("Masukkan 4 digit kode PIN dengan benar.");
+            }
+        });
+
+        function performPairing(code) {
+            const pairBtn = document.getElementById('pairBtn');
+            pairBtn.disabled = true;
+            pairBtn.innerHTML = '<span>Menghubungkan...</span>';
+
+            fetch('/api/pair', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code })
+            })
+            .then(res => res.json())
+            .then(data => {
+                pairBtn.disabled = false;
+                pairBtn.innerHTML = '<span>HUBUNGKAN KE BOOTH</span>';
+
+                if (data.success) {
+                    sessionCode = code;
+                    document.getElementById('display-code').innerText = '#' + code;
+
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+                    document.getElementById('pairing-screen').classList.add('hidden');
+                    document.getElementById('expired-screen').classList.add('hidden');
+                    document.getElementById('remote-screen').classList.remove('hidden');
+                } else {
+                    if (data.message && data.message.includes('selesai')) {
+                        showExpiredScreen(code);
+                    } else {
+                        showError(data.message || "Kode PIN tidak valid.");
+                    }
+                }
+            })
+            .catch(() => {
+                pairBtn.disabled = false;
+                pairBtn.innerHTML = '<span>HUBUNGKAN KE BOOTH</span>';
+                showError("Gagal menghubungi server photobooth.");
+            });
+        }
+
+        function showExpiredScreen(code) {
+            document.getElementById('expired-code').innerText = '#' + code;
+            document.getElementById('expired-gallery-btn').href = `/gallery/${code}`;
+            document.getElementById('remote-screen').classList.add('hidden');
+            document.getElementById('pairing-screen').classList.add('hidden');
+            document.getElementById('expired-screen').classList.remove('hidden');
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        }
+
+        function resetToPairing() {
+            document.getElementById('code-input').value = '';
+            document.getElementById('expired-screen').classList.add('hidden');
+            document.getElementById('remote-screen').classList.add('hidden');
+            document.getElementById('pairing-screen').classList.remove('hidden');
+        }
+
+        function showError(msg) {
+            const errEl = document.getElementById('error-msg');
+            errEl.innerText = msg;
+            errEl.classList.remove('hidden');
+        }
+
+        function setTemplate(tpl, el) {
+            selectedTemplate = tpl;
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.className = "template-card relative flex-shrink-0 w-24 aspect-[2/3] rounded-2xl border-2 p-1 cursor-pointer transition-all duration-200 snap-center border-white/15 bg-white/5 hover:border-white/30";
+                const badge = card.querySelector('.active-badge');
+                if (badge) badge.classList.add('hidden');
+            });
+            el.className = "template-card relative flex-shrink-0 w-24 aspect-[2/3] rounded-2xl border-2 p-1 cursor-pointer transition-all duration-200 snap-center border-indigo-500 bg-indigo-600/20 shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-500/30";
+            const badge = el.querySelector('.active-badge');
+            if (badge) badge.classList.remove('hidden');
+
+            const nameEl = document.getElementById('selected-template-name');
+            if (nameEl) nameEl.innerText = tpl === 'default' ? 'Standar Polos' : tpl;
+
+            if (navigator.vibrate) navigator.vibrate(30);
+        }
+
+        function setFilter(flt, btn) {
+            selectedFilter = flt;
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.className = "filter-btn p-3 rounded-xl border text-xs font-bold transition bg-white/5 text-white/70 border-white/10 hover:border-white/20";
+            });
+            btn.className = "filter-btn p-3 rounded-xl border text-xs font-black transition bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30";
+            if (navigator.vibrate) navigator.vibrate(30);
+        }
+
+        function setTimer(tm, btn) {
+            selectedTimer = tm;
+            document.querySelectorAll('.timer-btn').forEach(b => {
+                b.className = "timer-btn p-3 rounded-xl border text-xs font-bold transition bg-white/5 text-white/70 border-white/10 hover:border-white/20";
+            });
+            btn.className = "timer-btn p-3 rounded-xl border text-xs font-black transition bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30";
+            if (navigator.vibrate) navigator.vibrate(30);
+        }
+
+        function startCapture() {
+            const shutterBtn = document.getElementById('shutterBtn');
+            shutterBtn.disabled = true;
+            shutterBtn.classList.add('opacity-50', 'pointer-events-none');
+            shutterBtn.innerHTML = `<span>⏳ MENYIAPKAN KAMERA...</span>`;
+            document.getElementById('shutter-status-info').innerText = "Lihat ke lensa kamera di monitor booth!";
+
+            if (navigator.vibrate) navigator.vibrate(100);
+
+            socket.emit('start_capture_session', {
+                code: sessionCode,
+                template: selectedTemplate,
+                filter: selectedFilter,
+                timer: selectedTimer
+            });
+        }
+
+        // WebSocket Handlers
+        socket.on('trigger_countdown', function(data) {
+            if (data.code === sessionCode) {
+                const shutterBtn = document.getElementById('shutterBtn');
+                shutterBtn.innerHTML = `<span>📸 FOTO ${data.shot}/${data.total} (${data.timer}s)</span>`;
+                document.getElementById('shutter-status-info').innerText = `Bersiap! Jepretan ${data.shot} dari ${data.total}`;
+            }
+        });
+
+        socket.on('shot_completed', function(data) {
+            if (data.code === sessionCode) {
+                if (navigator.vibrate) navigator.vibrate(150);
+                document.getElementById('shutter-status-info').innerText = `Jepretan ${data.shot} selesai!`;
+            }
+        });
+
+        socket.on('processing_collage', function(data) {
+            if (data.code === sessionCode) {
+                const shutterBtn = document.getElementById('shutterBtn');
+                shutterBtn.innerHTML = `<span>🎨 MERANGKAI KOLASE...</span>`;
+                document.getElementById('shutter-status-info').innerText = "Kolase foto sedang dirangkai...";
+            }
+        });
+
+        // Sesi Selesai -> Langsung Tampilkan Layar Kadaluarsa + Link Galeri
+        socket.on('session_finished', function(data) {
+            if (data.code === sessionCode) {
+                showExpiredScreen(sessionCode);
+            }
+        });
+
+        socket.on('capture_error', function(data) {
+            if (data.code === sessionCode) {
+                alert("Kesalahan: " + data.message);
+                const shutterBtn = document.getElementById('shutterBtn');
+                shutterBtn.disabled = false;
+                shutterBtn.classList.remove('opacity-50', 'pointer-events-none');
+                shutterBtn.innerHTML = `<span>📸 MULAI SESI FOTO</span>`;
+                document.getElementById('shutter-status-info').innerText = "Silakan coba kembali";
+            }
+        });
+    </script>
+</body>
+</html>

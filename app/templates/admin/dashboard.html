@@ -1,0 +1,321 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard Monitoring{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header Banner: Date & Uptime -->
+    <div class="glass-card p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-gray-100/80">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Tanggal Hari Ini</p>
+                <h3 class="text-base font-bold text-gray-900" id="live-today-date">{{ today_date }}</h3>
+            </div>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+                <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs font-medium text-gray-600">Sistem Berjalan:</span>
+                <span id="dashboard-uptime" class="text-xs font-mono font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded-md">{{ uptime }}</span>
+            </div>
+            <div class="text-xs text-gray-400 hidden sm:block border-l border-gray-200 pl-4">
+                Jam Server: <span id="dashboard-server-time" class="font-mono font-semibold text-gray-700">--:--:--</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5 Stat Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <!-- Total Sesi -->
+        <div class="glass-card p-5 rounded-2xl border border-gray-100/80 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Total Sesi</p>
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7c0-2-1.5-3-3.5-3h-9C5.5 4 4 5 4 7z"/></svg>
+                </div>
+            </div>
+            <h3 class="text-2xl font-black text-gray-900" id="stat-total">{{ total }}</h3>
+            <span class="text-[10px] text-gray-400 font-medium">Keseluruhan sesi</span>
+        </div>
+
+        <!-- Sesi Hari Ini -->
+        <div class="glass-card p-5 rounded-2xl border border-gray-100/80 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Hari Ini</p>
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <h3 class="text-2xl font-black text-indigo-600" id="stat-today">{{ today }}</h3>
+            <span class="text-[10px] text-gray-400 font-medium">Sesi baru hari ini</span>
+        </div>
+
+        <!-- Sesi Aktif -->
+        <div class="glass-card p-5 rounded-2xl border border-gray-100/80 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Sesi Aktif</p>
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728M9.172 14.828a5 5 0 010-7.07m5.656 0a5 5 0 010 7.07M12 12h.01"/></svg>
+                </div>
+            </div>
+            <h3 class="text-2xl font-black text-emerald-600" id="stat-active">{{ active }}</h3>
+            <span class="text-[10px] text-gray-400 font-medium">Terkoneksi</span>
+        </div>
+
+        <!-- Sesi Menunggu -->
+        <div class="glass-card p-5 rounded-2xl border border-gray-100/80 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Menunggu</p>
+                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <h3 class="text-2xl font-black text-amber-600" id="stat-waiting">{{ waiting }}</h3>
+            <span class="text-[10px] text-gray-400 font-medium">Antrian / waiting</span>
+        </div>
+
+        <!-- Selesai -->
+        <div class="glass-card p-5 rounded-2xl border border-gray-100/80 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-2">
+                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Selesai</p>
+                <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+            </div>
+            <h3 class="text-2xl font-black text-purple-600" id="stat-completed">{{ completed }}</h3>
+            <span class="text-[10px] text-gray-400 font-medium">Selesai dicetak/diambil</span>
+        </div>
+    </div>
+
+    <!-- Chart: Realtime Grafik Sesi Hari Ini -->
+    <div class="glass-card p-6 rounded-3xl border border-gray-100/80">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h3 class="text-base font-bold text-gray-900">Aktivitas Sesi Hari Ini</h3>
+                <p class="text-xs text-gray-400">Grafik frekuensi sesi photobooth per jam (otomatis update)</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex h-2 w-2 rounded-full bg-indigo-500 animate-ping"></span>
+                <span class="text-xs font-semibold text-indigo-600">Realtime</span>
+            </div>
+        </div>
+        <div class="h-64 w-full">
+            <canvas id="sessionsHourlyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Table: Recent Sessions -->
+    <div class="glass-card p-6 rounded-3xl border border-gray-100/80">
+        <div class="flex items-center justify-between mb-5">
+            <div>
+                <h3 class="text-base font-bold text-gray-900">Aktivitas Sesi Terbaru</h3>
+                <p class="text-xs text-gray-400">10 sesi terakhir yang tercatat di database</p>
+            </div>
+            <button onclick="fetchRecentSessions()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 flex items-center gap-1.5 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Refresh
+            </button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="text-gray-400 border-b border-gray-100">
+                    <tr>
+                        <th class="pb-3 font-semibold">ID</th>
+                        <th class="pb-3 font-semibold">KODE PIN</th>
+                        <th class="pb-3 font-semibold">TEMPLATE</th>
+                        <th class="pb-3 font-semibold">STATUS</th>
+                        <th class="pb-3 font-semibold">WAKTU DIBUAT</th>
+                    </tr>
+                </thead>
+                <tbody id="recent-sessions-body" class="divide-y divide-gray-100 font-medium">
+                    {% for s in recent %}
+                    <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
+                        <td class="py-3 font-mono text-gray-400">#{{ s.id }}</td>
+                        <td class="py-3 font-mono font-bold text-gray-900">{{ s.unique_code }}</td>
+                        <td class="py-3 text-gray-600 font-semibold">{{ s.template_name or 'default' }}</td>
+                        <td class="py-3">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold {% if s.status == 'connected' %}bg-emerald-50 text-emerald-700{% elif s.status == 'waiting' %}bg-amber-50 text-amber-700{% elif s.status == 'completed' %}bg-purple-50 text-purple-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                {{ s.status }}
+                            </span>
+                        </td>
+                        <td class="py-3 text-gray-500">{{ s.created_at.strftime('%H:%M:%S - %d %b %Y') if s.created_at else '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-gray-400">Belum ada aktivitas sesi tercatat di database.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Socket.IO & Chart.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+let hourlyChart = null;
+
+function initChart(labels, values) {
+    const ctx = document.getElementById('sessionsHourlyChart').getContext('2d');
+    
+    // Gradient fill
+    const gradient = ctx.createLinearGradient(0, 0, 0, 250);
+    gradient.addColorStop(0, 'rgba(79, 70, 229, 0.25)');
+    gradient.addColorStop(1, 'rgba(79, 70, 229, 0.00)');
+
+    hourlyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Sesi Selesai / Masuk',
+                data: values,
+                borderColor: '#4f46e5',
+                borderWidth: 2.5,
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.35,
+                pointBackgroundColor: '#4f46e5',
+                pointRadius: 3,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#111827',
+                    padding: 10,
+                    titleFont: { size: 12, weight: 'bold' },
+                    bodyFont: { size: 12 },
+                    displayColors: false
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 10 }, color: '#9ca3af', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0, font: { size: 10 }, color: '#9ca3af' },
+                    grid: { color: '#f3f4f6' }
+                }
+            }
+        }
+    });
+}
+
+function updateChart() {
+    fetch('/admin/api/chart-data')
+        .then(res => res.json())
+        .then(data => {
+            if (!hourlyChart) {
+                initChart(data.labels, data.values);
+            } else {
+                hourlyChart.data.labels = data.labels;
+                hourlyChart.data.datasets[0].data = data.values;
+                hourlyChart.update('none');
+            }
+        })
+        .catch(err => console.error('Error fetching chart data:', err));
+}
+
+function fetchStats() {
+    fetch('/admin/api/stats')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('stat-total').innerText = data.total;
+            document.getElementById('stat-active').innerText = data.active;
+            document.getElementById('stat-completed').innerText = data.completed;
+            document.getElementById('stat-waiting').innerText = data.waiting;
+            document.getElementById('stat-today').innerText = data.today;
+
+            if (data.uptime_secs !== undefined) {
+                const h = Math.floor(data.uptime_secs / 3600);
+                const m = Math.floor((data.uptime_secs % 3600) / 60);
+                document.getElementById('dashboard-uptime').innerText = `${h}j ${m}m`;
+            }
+            if (data.server_time) {
+                document.getElementById('dashboard-server-time').innerText = data.server_time;
+            }
+        })
+        .catch(err => console.error('Error fetching stats:', err));
+}
+
+function fetchRecentSessions() {
+    fetch('/admin/api/recent-sessions')
+        .then(res => res.json())
+        .then(sessions => {
+            const tbody = document.getElementById('recent-sessions-body');
+            if (!sessions || sessions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-gray-400">Belum ada aktivitas sesi tercatat di database.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = sessions.map(s => {
+                let badgeClass = 'bg-gray-100 text-gray-600';
+                if (s.status === 'connected') badgeClass = 'bg-emerald-50 text-emerald-700';
+                else if (s.status === 'waiting') badgeClass = 'bg-amber-50 text-amber-700';
+                else if (s.status === 'completed') badgeClass = 'bg-purple-50 text-purple-700';
+
+                return `
+                    <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
+                        <td class="py-3 font-mono text-gray-400">#${s.id}</td>
+                        <td class="py-3 font-mono font-bold text-gray-900">${s.code}</td>
+                        <td class="py-3 text-gray-600 font-semibold">${s.template || 'default'}</td>
+                        <td class="py-3">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${badgeClass}">
+                                ${s.status}
+                            </span>
+                        </td>
+                        <td class="py-3 text-gray-500">${s.created_at}</td>
+                    </tr>
+                `;
+            }).join('');
+        })
+        .catch(err => console.error('Error fetching recent sessions:', err));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateChart();
+    fetchStats();
+    fetchRecentSessions();
+    
+    // Sinkronisasi realtime via Socket.IO
+    try {
+        const socket = io();
+        socket.on('session_updated', () => {
+            fetchRecentSessions();
+            fetchStats();
+            updateChart();
+        });
+        socket.on('device_paired', () => {
+            fetchRecentSessions();
+            fetchStats();
+        });
+        socket.on('session_finished', () => {
+            fetchRecentSessions();
+            fetchStats();
+            updateChart();
+        });
+    } catch (e) {
+        console.warn('SocketIO warning:', e);
+    }
+
+    // Polling berkala sebagai fallback
+    setInterval(fetchStats, 5000);
+    setInterval(fetchRecentSessions, 5000);
+    setInterval(updateChart, 30000);
+});
+</script>
+{% endblock %}

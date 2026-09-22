@@ -1,0 +1,390 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Foto Mentah{% endblock %}
+{% block page_title %}Galeri Foto Mentah{% endblock %}
+
+{% block extra_head %}
+<style>
+    .session-group { transition: all 0.2s ease; }
+    .session-group:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+    .raw-thumb {
+        aspect-ratio: 4/3;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .raw-thumb:hover { transform: scale(1.02); }
+    .raw-thumb .check-overlay {
+        position: absolute; inset: 0;
+        background: rgba(124,58,237,0.35);
+        opacity: 0; transition: opacity 0.15s;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 12px;
+    }
+    .raw-thumb.selected .check-overlay { opacity: 1; }
+    .raw-thumb .check-icon {
+        width: 28px; height: 28px; border-radius: 50%;
+        background: #fff; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .action-bar {
+        position: sticky; bottom: 0; z-index: 30;
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid #f0f0f2;
+        animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+            <h2 class="text-lg font-bold text-gray-900 tracking-tight">Galeri Foto Mentah</h2>
+            <p class="text-xs text-gray-500">Semua foto jepretan mentah, dikelompokkan per sesi. Pilih foto lalu download via QR.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-500 font-medium">Total Sesi:</span>
+            <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold font-mono">{{ grouped|length }}</span>
+        </div>
+    </div>
+
+    {% for group in grouped %}
+    <div class="session-group glass-card rounded-2xl overflow-hidden border border-gray-100/80" data-code="{{ group.code }}">
+        <!-- Session Header -->
+        <div class="px-5 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                    #{{ group.code }}
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-900">Sesi {{ group.code }}</p>
+                    <p class="text-[11px] text-gray-400">{{ group.template }} · {{ group.created_at }} · {{ group.photo_count }} foto</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- Select All -->
+                <button onclick="toggleSelectAll('{{ group.code }}')" class="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
+                    Pilih Semua
+                </button>
+                <!-- Download All ZIP via QR -->
+                <button onclick="showDownloadQr('{{ group.code }}', 'all')" class="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                    QR Semua
+                </button>
+                <!-- Direct Download All -->
+                <a href="/admin/api/download-raw-zip/{{ group.code }}" class="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-colors flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Download Semua
+                </a>
+            </div>
+        </div>
+
+        <!-- Photos Grid -->
+        <div class="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {% for photo in group.photos %}
+            <div class="raw-thumb rounded-xl overflow-hidden cursor-pointer bg-gray-100 group relative border border-gray-100"
+                 data-filename="{{ photo.filename }}"
+                 data-session="{{ group.code }}"
+                 onclick="toggleSelect(this)">
+                <img src="{{ photo.url }}" class="w-full h-full object-cover" alt="{{ photo.filename }}" loading="lazy">
+                <div class="check-overlay">
+                    <div class="check-icon">
+                        <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                </div>
+                <!-- Quick QR & Preview Button in Thumbnail -->
+                <div class="absolute top-2 left-2 flex items-center gap-1 z-10">
+                    <button type="button"
+                            onclick="event.stopPropagation(); showSinglePhotoQr('{{ photo.url }}', '{{ photo.filename }}')"
+                            class="p-1 rounded-md bg-white/90 text-gray-800 shadow hover:bg-white hover:text-violet-600 transition-colors"
+                            title="Scan QR Foto Ini">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                    </button>
+                    <button type="button"
+                            onclick="event.stopPropagation(); openPreview('{{ photo.url }}', '{{ photo.filename }}')"
+                            class="p-1 rounded-md bg-white/90 text-gray-800 shadow hover:bg-white hover:text-violet-600 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Preview">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </button>
+                </div>
+                <!-- Selection checkbox visual indicator -->
+                <div class="absolute top-2 right-2 w-5 h-5 rounded-md border-2 border-white/90 bg-black/20 flex items-center justify-center select-check opacity-70 group-hover:opacity-100 transition-opacity">
+                </div>
+                <!-- Hover info -->
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p class="text-[9px] text-white font-mono truncate">{{ photo.filename }}</p>
+                    <p class="text-[9px] text-white/80">{{ photo.size }} KB</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="py-16 text-center text-gray-400 glass-card rounded-2xl p-8 border border-dashed border-gray-200">
+        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <p class="font-medium text-sm text-gray-600">Belum ada foto mentah yang tersimpan</p>
+        <p class="text-xs text-gray-400 mt-1">Foto mentah dari sesi photobooth akan otomatis tampil di sini.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Sticky action bar (shown when photos are selected) -->
+<div id="selection-bar" class="action-bar hidden px-6 py-3">
+    <div class="flex items-center justify-between max-w-screen-xl mx-auto">
+        <div class="flex items-center gap-3">
+            <span class="text-xs font-semibold text-gray-700">
+                <span id="selected-count">0</span> foto dipilih
+            </span>
+            <button onclick="clearSelection()" class="text-[11px] text-gray-400 hover:text-gray-600 underline">Batal pilih</button>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="showDownloadQr(null, 'selected')" class="px-4 py-2 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                QR Download Terpilih
+            </button>
+            <button onclick="downloadSelected()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-violet-600 text-white hover:bg-violet-700 transition-colors flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Download Terpilih
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- QR Download Modal -->
+<div id="qr-modal" class="fixed inset-0 z-50 hidden">
+    <div class="qr-modal-overlay absolute inset-0" onclick="closeQrModal()"></div>
+    <div class="qr-modal-content absolute inset-0 flex items-center justify-center p-6">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative">
+            <button onclick="closeQrModal()" class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="mb-4">
+                <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                </div>
+                <h3 id="qr-modal-title" class="text-base font-bold text-gray-900">Download via QR</h3>
+                <p id="qr-modal-desc" class="text-xs text-gray-500 mt-1">Scan QR Code untuk mengunduh foto mentah</p>
+            </div>
+            <div id="qr-modal-content" class="flex justify-center mb-4"></div>
+            <p id="qr-modal-info" class="text-[11px] text-gray-500 font-mono"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="preview-modal" class="fixed inset-0 z-50 hidden">
+    <div class="qr-modal-overlay absolute inset-0" onclick="closePreview()"></div>
+    <div class="qr-modal-content absolute inset-4 sm:inset-12 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <p id="preview-title" class="text-sm font-semibold text-gray-800 truncate"></p>
+                <button onclick="closePreview()" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-4 bg-gray-50 flex justify-center">
+                <img id="preview-img" src="" class="max-h-[65vh] rounded-xl" alt="Preview">
+            </div>
+            <div class="px-5 py-3 border-t border-gray-100 flex justify-end gap-2">
+                <a id="preview-download" href="" download class="px-4 py-2 bg-violet-600 text-white text-xs font-semibold rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Download
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const selectedPhotos = new Set();
+
+    function toggleSelect(el) {
+        const filename = el.dataset.filename;
+        if (el.classList.contains('selected')) {
+            el.classList.remove('selected');
+            selectedPhotos.delete(filename);
+        } else {
+            el.classList.add('selected');
+            selectedPhotos.add(filename);
+        }
+        updateSelectionBar();
+    }
+
+    function toggleSelectAll(code) {
+        const group = document.querySelector(`[data-code="${code}"]`);
+        const thumbs = group.querySelectorAll('.raw-thumb');
+        const allSelected = Array.from(thumbs).every(t => t.classList.contains('selected'));
+
+        thumbs.forEach(t => {
+            const fname = t.dataset.filename;
+            if (allSelected) {
+                t.classList.remove('selected');
+                selectedPhotos.delete(fname);
+            } else {
+                t.classList.add('selected');
+                selectedPhotos.add(fname);
+            }
+        });
+        updateSelectionBar();
+    }
+
+    function clearSelection() {
+        document.querySelectorAll('.raw-thumb.selected').forEach(t => {
+            t.classList.remove('selected');
+        });
+        selectedPhotos.clear();
+        updateSelectionBar();
+    }
+
+    function updateSelectionBar() {
+        const bar = document.getElementById('selection-bar');
+        const count = document.getElementById('selected-count');
+        count.textContent = selectedPhotos.size;
+        if (selectedPhotos.size > 0) {
+            bar.classList.remove('hidden');
+        } else {
+            bar.classList.add('hidden');
+        }
+    }
+
+    function showSinglePhotoQr(url, filename) {
+        const container = document.getElementById('qr-modal-content');
+        container.innerHTML = '';
+
+        new QRCode(container, {
+            text: url,
+            width: 220,
+            height: 220,
+            colorDark: '#111827',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        document.getElementById('qr-modal-title').textContent = 'Scan QR Foto';
+        document.getElementById('qr-modal-desc').textContent = 'Arahkan kamera smartphone ke QR untuk membuka dan mengunduh foto ini';
+        document.getElementById('qr-modal-info').textContent = filename;
+        document.getElementById('qr-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function showDownloadQr(code, mode) {
+        const container = document.getElementById('qr-modal-content');
+        container.innerHTML = '';
+
+        let url, title, desc, info;
+
+        if (mode === 'all') {
+            url = window.location.origin + '/admin/api/download-raw-zip/' + code;
+            title = 'Download Semua Foto #' + code;
+            desc = 'Scan QR untuk mengunduh semua foto mentah sesi #' + code + ' dalam format ZIP';
+            info = 'Sesi #' + code;
+        } else {
+            if (selectedPhotos.size === 0) {
+                alert('Pilih minimal 1 foto terlebih dahulu.');
+                return;
+            }
+            if (selectedPhotos.size === 1) {
+                const fname = Array.from(selectedPhotos)[0];
+                url = window.location.origin + '/static/uploads/temp/' + fname;
+                title = 'Download 1 Foto Terpilih';
+                desc = 'Scan QR untuk membuka dan mengunduh foto mentah terpilih';
+                info = fname;
+            } else {
+                const firstEl = document.querySelector('.raw-thumb.selected');
+                const sessionCode = firstEl ? firstEl.dataset.session : 'selected';
+                url = window.location.origin + '/admin/api/download-selected-zip?code=' + sessionCode + '&files=' + encodeURIComponent(Array.from(selectedPhotos).join(','));
+                title = 'Download ' + selectedPhotos.size + ' Foto Terpilih';
+                desc = 'Scan QR untuk mengunduh ' + selectedPhotos.size + ' foto mentah terpilih dalam format ZIP';
+                info = selectedPhotos.size + ' file terpilih';
+            }
+        }
+
+        new QRCode(container, {
+            text: url,
+            width: 220,
+            height: 220,
+            colorDark: '#111827',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        document.getElementById('qr-modal-title').textContent = title;
+        document.getElementById('qr-modal-desc').textContent = desc;
+        document.getElementById('qr-modal-info').textContent = info;
+        document.getElementById('qr-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeQrModal() {
+        document.getElementById('qr-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function downloadSelected() {
+        if (selectedPhotos.size === 0) {
+            alert('Pilih minimal 1 foto terlebih dahulu.');
+            return;
+        }
+
+        // Find session code from the first selected photo
+        const firstEl = document.querySelector('.raw-thumb.selected');
+        const code = firstEl ? firstEl.dataset.session : 'selected';
+
+        fetch('/admin/api/download-selected-zip', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ files: Array.from(selectedPhotos), code: code })
+        })
+        .then(resp => {
+            if (!resp.ok) throw new Error('Download gagal');
+            return resp.blob();
+        })
+        .then(blob => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `raw_photos_${code}.zip`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        })
+        .catch(err => alert(err.message));
+    }
+
+    function openPreview(url, filename) {
+        document.getElementById('preview-img').src = url;
+        document.getElementById('preview-title').textContent = filename;
+        document.getElementById('preview-download').href = url;
+        document.getElementById('preview-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePreview() {
+        document.getElementById('preview-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeQrModal();
+            closePreview();
+        }
+    });
+
+    // Right click to preview instead of select
+    document.querySelectorAll('.raw-thumb').forEach(el => {
+        el.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            const img = el.querySelector('img');
+            openPreview(img.src, el.dataset.filename);
+        });
+    });
+</script>
+{% endblock %}
