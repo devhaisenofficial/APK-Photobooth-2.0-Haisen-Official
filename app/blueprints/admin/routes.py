@@ -9,9 +9,10 @@ from datetime import datetime, date
 from werkzeug.utils import secure_filename
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app, send_file
 from flask_login import login_required
-from extensions import db
+from extensions import db, socketio
 from app.models.session_model import PhotoSession
 from app.models.admin_model import AppSetting
+from app.services.camera_service import CameraService
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin', template_folder='../../templates')
 
@@ -583,6 +584,56 @@ def api_download_selected_zip():
     buf.seek(0)
     return send_file(buf, mimetype='application/zip',
                      as_attachment=True, download_name=f'raw_photos_{code}.zip')
+
+
+@admin_bp.route('/api/reset-session-pin', methods=['POST'])
+@login_required
+def api_reset_session_pin():
+    """Mereset kode PIN sesi booth secara instan dari Admin dan memancarkannya via WebSocket ke monitor."""
+    import random
+
+    # 1. Tandai semua sesi 'waiting' aktif lama sebagai 'expired'
+    waiting_sessions = PhotoSession.query.filter_by(status='waiting').all()
+    for s in waiting_sessions:
+        s.status = 'expired'
+    db.session.commit()
+
+    # 2. Buat PIN unik 4 digit baru
+    while True:
+        new_code = f"{random.randint(1000, 9999)}"
+        existing = PhotoSession.query.filter_by(unique_code=new_code).first()
+        if not existing:
+            break
+
+    new_session = PhotoSession(unique_code=new_code, status='waiting', created_at=datetime.now())
+    db.session.add(new_session)
+    db.session.commit()
+
+    # 3. Reset preview filter kamera ke 'classic' (Natural)
+    try:
+        CameraService().set_preview_filter('classic')
+    except Exception:
+        pass
+
+    # 4. Broadcast event ke layar monitor Host secara realtime
+    mobile_url = f"http://{request.host}/mobile?code={new_code}"
+    try:
+        socketio.emit('session_pin_reset', {
+            'code': new_code,
+            'mobile_url': mobile_url,
+            'timeout_seconds': 180
+        })
+        socketio.emit('session_updated', {'code': new_code, 'status': 'waiting'})
+        socketio.emit('filter_updated', {'filter': 'classic', 'code': new_code})
+    except Exception as e:
+        print(f"Error emitting socket on pin reset: {e}")
+
+    return jsonify({
+        'success': True,
+        'message': f'Kode PIN sesi berhasil direset menjadi #{new_code}',
+        'code': new_code,
+        'mobile_url': mobile_url
+    })
 
 
 

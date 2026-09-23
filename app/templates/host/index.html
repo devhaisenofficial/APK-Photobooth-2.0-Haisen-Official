@@ -144,7 +144,7 @@
                                 Atau Ketik Kode PIN Sesi
                             </span>
                             <div class="font-mono-code text-5xl sm:text-6xl font-black tracking-wider text-indigo-300 neon-glow-pin flex items-center gap-1">
-                                <span>#</span><span>{{ code }}</span>
+                                <span>#</span><span id="pin-display-text">{{ code }}</span>
                             </div>
                         </div>
                         <div class="hidden sm:block h-12 w-px bg-white/10"></div>
@@ -208,12 +208,19 @@
         
         <!-- Top Status Bar Floating -->
         <div class="absolute top-6 left-8 right-8 flex items-center justify-between z-30 pointer-events-none">
-            <div class="flex items-center gap-3 bg-white/10 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/15 text-white shadow-2xl">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span id="host-status-text" class="text-xs font-bold tracking-wide">Ponsel Terhubung • Atur Filter & Tekan Shutter di HP</span>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 bg-white/10 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/15 text-white shadow-2xl">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="host-status-text" class="text-xs font-bold tracking-wide">Ponsel Terhubung • Atur Filter & Tekan Shutter di HP</span>
+                </div>
+                <!-- Badge Filter Aktif Realtime -->
+                <div id="host-filter-badge" class="flex items-center gap-2 bg-indigo-600/40 backdrop-blur-xl px-4 py-2.5 rounded-full border border-indigo-400/30 text-white shadow-2xl transition-all duration-300">
+                    <span class="text-[10px] font-black uppercase tracking-wider text-indigo-300">Filter:</span>
+                    <span id="host-filter-name" class="text-xs font-black uppercase tracking-wider text-white">NATURAL</span>
+                </div>
             </div>
 
-            <div class="bg-white/10 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/15 text-white text-xs font-mono-code font-bold tracking-wider shadow-2xl">
+            <div id="pin-in-camera-display" class="bg-white/10 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/15 text-white text-xs font-mono-code font-bold tracking-wider shadow-2xl">
                 PIN: #{{ code }}
             </div>
         </div>
@@ -244,16 +251,37 @@
 
     <!-- SCRIPT LOGIKA, WEBSOCKET, & AUDIO -->
     <script>
-        // 1. Render Floating QR Code
-        const mobileUrl = "{{ mobile_url }}";
-        new QRCode(document.getElementById("qrcode"), {
-            text: mobileUrl,
-            width: 175,
-            height: 175,
-            colorDark: "#0f172a",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
+        // 1. Render Floating QR Code Dinamis
+        let currentCode = "{{ code }}";
+        let mobileUrl = "{{ mobile_url }}";
+        let qrInstance = null;
+
+        const qrContainer = document.getElementById("qrcode");
+        if (qrContainer) {
+            qrInstance = new QRCode(qrContainer, {
+                text: mobileUrl,
+                width: 175,
+                height: 175,
+                colorDark: "#0f172a",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function updateQrCode(url) {
+            const container = document.getElementById("qrcode");
+            if (container && url) {
+                container.innerHTML = '';
+                qrInstance = new QRCode(container, {
+                    text: url,
+                    width: 175,
+                    height: 175,
+                    colorDark: "#0f172a",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+        }
 
         // 2. Audio Beep Synthesizer menggunakan Web Audio API
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -281,19 +309,63 @@
         const bgVideo = document.getElementById('bg-video');
         if (bgVideo) {
             bgVideo.play().catch(() => {
-                // Browser policy fallback jika perlu user gesture
                 document.body.addEventListener('click', () => {
                     bgVideo.play();
                 }, { once: true });
             });
         }
 
-        // 4. Socket.IO Connection & Events
+        // 4. Timer Auto-Expire Sesi Standby (3 Menit / 180 Detik Tanpa Digunakan)
+        let standbySecondsLeft = {{ timeout_seconds|default(180) }};
+        setInterval(() => {
+            const standbyScreen = document.getElementById('standby-screen');
+            // Hanya aktif saat layar booth berada di mode standby (belum terkoneksi dengan HP)
+            if (standbyScreen && !standbyScreen.classList.contains('hidden')) {
+                standbySecondsLeft--;
+                if (standbySecondsLeft <= 0) {
+                    standbySecondsLeft = 180;
+                    fetch('/api/request-new-pin', { method: 'POST' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.code) {
+                                currentCode = data.code;
+                                const pinText = document.getElementById('pin-display-text');
+                                if (pinText) pinText.innerText = data.code;
+                                const pinCamera = document.getElementById('pin-in-camera-display');
+                                if (pinCamera) pinCamera.innerText = 'PIN: #' + data.code;
+                                if (data.mobile_url) updateQrCode(data.mobile_url);
+
+                                const filterName = document.getElementById('host-filter-name');
+                                if (filterName) filterName.innerText = 'NATURAL';
+                            }
+                        })
+                        .catch(err => console.log("Gagal memperbarui PIN sesi:", err));
+                }
+            }
+        }, 1000);
+
+        // 5. Socket.IO Connection & Events
         const socket = io();
-        const currentCode = "{{ code }}";
 
         socket.on('connect', () => {
             console.log("Host WebSocket terkoneksi.");
+        });
+
+        // Event Reset PIN dari Admin Panel secara Realtime
+        socket.on('session_pin_reset', function(data) {
+            if (data.code) {
+                currentCode = data.code;
+                const pinText = document.getElementById('pin-display-text');
+                if (pinText) pinText.innerText = data.code;
+                const pinCamera = document.getElementById('pin-in-camera-display');
+                if (pinCamera) pinCamera.innerText = 'PIN: #' + data.code;
+                if (data.mobile_url) updateQrCode(data.mobile_url);
+
+                const filterName = document.getElementById('host-filter-name');
+                if (filterName) filterName.innerText = 'NATURAL';
+
+                standbySecondsLeft = data.timeout_seconds || 180;
+            }
         });
 
         // Event HP Terhubung
@@ -310,6 +382,16 @@
                     standby.classList.add('hidden');
                     camera.classList.remove('hidden');
                 }, 500);
+            }
+        });
+
+        // Event Update Filter Realtime dari Remote HP
+        socket.on('filter_updated', function(data) {
+            if (data.code === currentCode) {
+                const nameEl = document.getElementById('host-filter-name');
+                if (nameEl) {
+                    nameEl.innerText = (data.filter || 'classic').toUpperCase();
+                }
             }
         });
 
@@ -375,6 +457,60 @@
             if (data.code === currentCode) {
                 window.location.href = data.redirect_url + '?from=host';
             }
+        });
+
+        // Event Remote Meninggalkan Halaman -> Kembali ke Standby dengan PIN Baru
+        socket.on('session_expired_by_remote', function(data) {
+            // Minta PIN baru dari server
+            fetch('/api/request-new-pin', { method: 'POST' })
+                .then(r => r.json())
+                .then(d => {
+                    if (!d.code) return;
+                    currentCode = d.code;
+
+                    // Update PIN & QR di standby screen
+                    const pinText = document.getElementById('pin-display-text');
+                    if (pinText) pinText.innerText = d.code;
+                    const pinCamera = document.getElementById('pin-in-camera-display');
+                    if (pinCamera) pinCamera.innerText = 'PIN: #' + d.code;
+                    if (d.mobile_url) updateQrCode(d.mobile_url);
+
+                    // Reset badge filter
+                    const filterName = document.getElementById('host-filter-name');
+                    if (filterName) filterName.innerText = 'NATURAL';
+
+                    // Reset countdown processing overlays
+                    document.getElementById('countdown-overlay').classList.add('hidden');
+                    document.getElementById('processing-overlay').classList.add('hidden');
+                    document.getElementById('flash-overlay').classList.add('hidden');
+
+                    // Fade camera-screen -> standby-screen
+                    const cameraScreen = document.getElementById('camera-screen');
+                    const standbyScreen = document.getElementById('standby-screen');
+
+                    cameraScreen.style.opacity = '0';
+                    cameraScreen.style.transition = 'opacity 0.6s ease';
+                    setTimeout(() => {
+                        cameraScreen.classList.add('hidden');
+                        cameraScreen.style.opacity = '';
+                        cameraScreen.style.transition = '';
+
+                        standbyScreen.classList.remove('hidden');
+                        standbyScreen.style.opacity = '0';
+                        standbyScreen.style.transition = 'opacity 0.6s ease';
+                        setTimeout(() => {
+                            standbyScreen.style.opacity = '1';
+                            setTimeout(() => {
+                                standbyScreen.style.opacity = '';
+                                standbyScreen.style.transition = '';
+                            }, 650);
+                        }, 30);
+                    }, 600);
+
+                    standbySecondsLeft = d.timeout_seconds || 180;
+                    playBeep(400, 0.2);
+                })
+                .catch(err => console.log('Gagal memperbarui PIN setelah remote disconnect:', err));
         });
     </script>
 </body>

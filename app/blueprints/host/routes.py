@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, Response
+from flask import Blueprint, render_template, request, Response, jsonify
 from extensions import db, socketio
 from app.models.session_model import PhotoSession
 from app.services.camera_service import CameraService
@@ -7,8 +7,6 @@ import random
 
 host_bp = Blueprint('host', __name__, template_folder='../../templates')
 
-# Singleton kamera — dibuat saat pertama kali /video_feed dipanggil
-# (bukan saat module di-import) agar Flask app context sudah tersedia.
 _camera = None
 
 def get_camera():
@@ -18,29 +16,90 @@ def get_camera():
     return _camera
 
 
-@host_bp.route('/')
-def index():
-    # Generate kode unik 4 digit random (1000 - 9999)
+SESSION_TIMEOUT_SECONDS = 180  # 3 Menit
+
+
+def get_or_create_waiting_session():
+    """
+    Mengambil sesi waiting yang masih aktif (belum expired & berumur <= 3 menit)
+    atau membuat sesi baru jika tidak ada / sudah expired.
+    Mencegah kode PIN berganti setiap kali halaman di-refresh sebelum digunakan.
+    """
+    waiting = PhotoSession.query.filter_by(status='waiting').order_by(PhotoSession.created_at.desc()).first()
+
+    if waiting:
+        elapsed = (datetime.now() - waiting.created_at).total_seconds() if waiting.created_at else 9999
+        if elapsed < SESSION_TIMEOUT_SECONDS:
+            # Sesi masih valid dalam rentang 3 menit dan belum dipakai -> gunakan kembali PIN ini
+            return waiting, False
+        else:
+            # Sesi sudah lebih dari 3 menit tanpa dipakai -> tandai expired
+            waiting.status = 'expired'
+            db.session.commit()
+
+    # Generate PIN 4 digit baru yang unik
     while True:
         code = f"{random.randint(1000, 9999)}"
-        existing = PhotoSession.query.filter_by(unique_code=code, status='waiting').first()
+        existing = PhotoSession.query.filter_by(unique_code=code).first()
         if not existing:
             break
 
-    # Simpan sesi baru ke database dengan waktu lokal hari ini & jam akurat
     new_session = PhotoSession(unique_code=code, status='waiting', created_at=datetime.now())
     db.session.add(new_session)
     db.session.commit()
+    return new_session, True
 
-    # Emit socket event agar admin dashboard langsung ter-update realtime
+
+@host_bp.route('/')
+def index():
+    # Pastikan filter preview kamera selalu kembali ke 'classic' (Natural) saat di standby
     try:
-        socketio.emit('session_updated', {'code': code, 'status': 'waiting'})
+        get_camera().set_preview_filter('classic')
     except Exception:
         pass
 
+    session, is_new = get_or_create_waiting_session()
+    code = session.unique_code
+
+    if is_new:
+        try:
+            socketio.emit('session_updated', {'code': code, 'status': 'waiting'})
+        except Exception:
+            pass
+
     mobile_url = f"http://{request.host}/mobile?code={code}"
 
-    return render_template('host/index.html', code=code, mobile_url=mobile_url)
+    # Sisa detik sebelum sesi 3 menit kedaluwarsa
+    elapsed = int((datetime.now() - session.created_at).total_seconds()) if session.created_at else 0
+    timeout_seconds = max(1, SESSION_TIMEOUT_SECONDS - elapsed)
+
+    return render_template('host/index.html', code=code, mobile_url=mobile_url, timeout_seconds=timeout_seconds)
+
+
+@host_bp.route('/api/request-new-pin', methods=['POST'])
+def api_request_new_pin():
+    """Dipanggil otomatis oleh monitor booth ketika timer 3 menit habis tanpa ada koneksi."""
+    # Tandai sesi lama sebagai expired
+    old_sessions = PhotoSession.query.filter_by(status='waiting').all()
+    for s in old_sessions:
+        s.status = 'expired'
+    db.session.commit()
+
+    session, is_new = get_or_create_waiting_session()
+    code = session.unique_code
+    mobile_url = f"http://{request.host}/mobile?code={code}"
+
+    try:
+        socketio.emit('session_updated', {'code': code, 'status': 'waiting'})
+        get_camera().set_preview_filter('classic')
+    except Exception:
+        pass
+
+    return jsonify({
+        'code': code,
+        'mobile_url': mobile_url,
+        'timeout_seconds': SESSION_TIMEOUT_SECONDS
+    })
 
 
 @host_bp.route('/video_feed')

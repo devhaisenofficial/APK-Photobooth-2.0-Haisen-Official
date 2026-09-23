@@ -38,9 +38,118 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 9999px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 9999px;
+        }
+    </style>
+
+    <!-- Professional Toast & Confirm Popup System -->
+    <style>
+        /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            pointer-events: none;
+            width: 90%;
+            max-width: 380px;
+        }
+        .toast {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+            border-radius: 18px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 16px 40px -10px rgba(0,0,0,0.7);
+            pointer-events: all;
+            animation: toastIn 0.3s cubic-bezier(0.16,1,0.3,1) both;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .toast.out { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to   { opacity: 0; transform: translateY(10px) scale(0.95); }
+        }
+        .toast-success { background: rgba(16, 185, 129, 0.22); border-color: rgba(16,185,129,0.35); }
+        .toast-error   { background: rgba(239, 68,  68, 0.22); border-color: rgba(239,68,68,0.35); }
+        .toast-info    { background: rgba(99,  102, 241,0.22); border-color: rgba(99,102,241,0.35); }
+        .toast-warn    { background: rgba(245, 158, 11, 0.22); border-color: rgba(245,158,11,0.35); }
+        .toast-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .toast-success .toast-icon { background: rgba(16,185,129,0.25); color: #34d399; }
+        .toast-error   .toast-icon { background: rgba(239,68,68,0.25);  color: #f87171; }
+        .toast-info    .toast-icon { background: rgba(99,102,241,0.25); color: #a5b4fc; }
+        .toast-warn    .toast-icon { background: rgba(245,158,11,0.25); color: #fbbf24; }
+
+        /* Confirm Dialog */
+        #confirm-overlay {
+            position: fixed; inset: 0; z-index: 9998;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        #confirm-box {
+            background: linear-gradient(160deg, #181826 0%, #0c0c18 100%);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 340px;
+            width: 100%;
+            box-shadow: 0 30px 80px -20px rgba(0,0,0,0.9);
+            animation: toastIn 0.3s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        #confirm-box h4 { font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+        #confirm-box p  { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.6; margin-bottom: 20px; }
+        .confirm-actions { display: flex; gap: 10px; }
+        .confirm-actions button { flex: 1; padding: 12px; border-radius: 14px; font-size: 12px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; }
+        #confirm-yes { background: linear-gradient(90deg, #4f46e5, #7c3aed); color: #fff; }
+        #confirm-yes:hover { opacity: 0.9; }
+        #confirm-no  { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.1) !important; }
+        #confirm-no:hover  { background: rgba(255,255,255,0.12); }
     </style>
 </head>
 <body class="bg-[#070b14] text-white min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 select-none relative overflow-x-hidden antialiased">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Confirm Dialog (hidden by default) -->
+    <div id="confirm-overlay" style="display:none;">
+        <div id="confirm-box">
+            <h4 id="confirm-title">Konfirmasi</h4>
+            <p id="confirm-msg">Apakah Anda yakin?</p>
+            <div class="confirm-actions">
+                <button id="confirm-no" type="button">Batal</button>
+                <button id="confirm-yes" type="button">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Ambient Lighting Halus -->
     <div class="fixed -top-32 -left-32 w-80 h-80 bg-indigo-600/20 rounded-full filter blur-[100px] pointer-events-none"></div>
@@ -106,19 +215,7 @@
             </div>
             
             <div class="flex gap-3 overflow-x-auto pb-2 pt-1 -mx-1 px-1 scrollbar-none snap-x">
-                <!-- Template Default Standar -->
-                <div onclick="setTemplate('default', this)" class="template-card relative flex-shrink-0 w-24 aspect-[2/3] rounded-2xl border-2 p-1 cursor-pointer transition-all duration-200 snap-center {% if active_template == 'default' %}border-indigo-500 bg-indigo-600/20 shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-500/30{% else %}border-white/15 bg-white/5 hover:border-white/30{% endif %}" data-value="default">
-                    <div class="w-full h-full rounded-xl bg-black/40 flex flex-col items-center justify-center p-2 text-center overflow-hidden border border-white/10">
-                        <div class="w-7 h-7 rounded-lg bg-white/10 shadow-xs flex items-center justify-center text-indigo-300 mb-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        </div>
-                        <span class="text-[10px] font-black text-white leading-tight">Standar</span>
-                        <span class="text-[8px] text-white/50 font-medium">Polos</span>
-                    </div>
-                    <div class="active-badge absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-md {% if active_template != 'default' %}hidden{% endif %}">✓</div>
-                </div>
-
-                <!-- Template Kustom Gambar Nyata -->
+                {% if custom_templates %}
                 {% for tpl in custom_templates %}
                 <div onclick="setTemplate('{{ tpl }}', this)" class="template-card relative flex-shrink-0 w-24 aspect-[2/3] rounded-2xl border-2 p-1 cursor-pointer transition-all duration-200 snap-center {% if active_template == tpl %}border-indigo-500 bg-indigo-600/20 shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-500/30{% else %}border-white/15 bg-white/5 hover:border-white/30{% endif %}" data-value="{{ tpl }}">
                     <div class="w-full h-full rounded-xl bg-black/40 flex items-center justify-center overflow-hidden border border-white/10">
@@ -127,23 +224,39 @@
                     <div class="active-badge absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-md {% if active_template != tpl %}hidden{% endif %}">✓</div>
                 </div>
                 {% endfor %}
+                {% else %}
+                <div class="w-full py-5 text-center text-[11px] text-white/30 font-semibold italic">
+                    Belum ada template diunggah. Upload via Admin → Templates.
+                </div>
+                {% endif %}
             </div>
         </div>
 
-        <!-- 2. Pilihan Filter Kamera -->
+        <!-- 2. Pilihan Filter Kamera (Compact Trigger Card) -->
         <div class="space-y-2">
-            <label class="text-[11px] font-black text-white/50 uppercase tracking-wider">Filter Warna</label>
-            <div class="grid grid-cols-3 gap-2">
-                <button type="button" onclick="setFilter('classic', this)" class="filter-btn p-3 rounded-xl border text-xs font-black transition bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30" data-value="classic">
-                    Natural
-                </button>
-                <button type="button" onclick="setFilter('bw', this)" class="filter-btn p-3 rounded-xl border text-xs font-bold transition bg-white/5 text-white/70 border-white/10 hover:border-white/20" data-value="bw">
-                    B&W
-                </button>
-                <button type="button" onclick="setFilter('vintage', this)" class="filter-btn p-3 rounded-xl border text-xs font-bold transition bg-white/5 text-white/70 border-white/10 hover:border-white/20" data-value="vintage">
-                    Vintage
-                </button>
+            <div class="flex items-center justify-between">
+                <label class="text-[11px] font-black text-white/50 uppercase tracking-wider">Filter Warna</label>
+                <span id="current-filter-badge" class="text-[10px] bg-indigo-500/20 text-indigo-300 font-bold px-2.5 py-0.5 rounded-full border border-indigo-500/30">Natural</span>
             </div>
+            
+            <button type="button" onclick="openFilterModal()" class="w-full p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-indigo-500/40 transition flex items-center justify-between group active:scale-[0.99] shadow-lg shadow-black/20">
+                <div class="flex items-center gap-3">
+                    <div id="filter-preview-icon" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                    </div>
+                    <div class="text-left">
+                        <div class="flex items-center gap-2">
+                            <span id="selected-filter-title" class="text-xs font-black text-white tracking-wide">Natural</span>
+                            <span class="text-[9px] bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.2 rounded border border-emerald-500/30">Aktif</span>
+                        </div>
+                        <p id="selected-filter-desc" class="text-[10px] text-white/50 mt-0.5 truncate max-w-[190px]">Warna asli natural photobooth</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 text-xs text-indigo-300 font-bold bg-indigo-600/20 px-3 py-1.5 rounded-xl border border-indigo-500/30 group-hover:bg-indigo-600 group-hover:text-white transition flex-shrink-0">
+                    <span>Ganti</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </div>
+            </button>
         </div>
 
         <!-- 3. Pilihan Timer Countdown -->
@@ -172,12 +285,225 @@
         </div>
     </div>
 
+    <!-- POPUP MODAL FILTER KAMERA REALTIME (DENGAN LOGO OFFSIDE) -->
+    <div id="filterModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-3 sm:p-4 transition-all duration-300">
+        <!-- Backdrop Backdrop Click to Close -->
+        <div class="absolute inset-0" onclick="closeFilterModal()"></div>
+
+        <!-- Modal Box Kontainer -->
+        <div class="relative w-full max-w-md bg-gradient-to-b from-[#181826] to-[#0c0c14] border border-white/15 rounded-3xl p-5 shadow-2xl shadow-black/90 flex flex-col max-h-[85vh] z-10">
+            
+            <!-- LOGO OFFSIDE FLOATING DI POJOK KANAN ATAS -->
+            <div class="absolute -top-6 -right-3 sm:-top-7 sm:-right-4 w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/25 p-2 shadow-2xl shadow-indigo-600/40 flex items-center justify-center z-20 pointer-events-none transform rotate-6 ring-2 ring-indigo-500/30">
+                <img src="{{ url_for('static', filename='img/haisen_logo.png') }}" class="w-full h-full object-contain filter drop-shadow" alt="Haisen Official Logo">
+            </div>
+
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between pb-3.5 border-b border-white/10 pr-12">
+                <div>
+                    <h3 class="text-base font-black text-white tracking-wide flex items-center gap-2">
+                        <span>Pilihan Filter Kamera</span>
+                        <span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-bold">14 Gaya</span>
+                    </h3>
+                    <p class="text-[11px] text-white/50 mt-0.5">Live preview di monitor booth langsung berubah</p>
+                </div>
+            </div>
+
+            <!-- Grid 14 Pilihan Filter (Scrollable) -->
+            <div class="grid grid-cols-2 gap-2.5 overflow-y-auto py-3 pr-1 my-1 max-h-[50vh] scrollbar-thin">
+                <!-- 1. Natural -->
+                <button type="button" onclick="setFilter('classic', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-indigo-600/20 border-indigo-500 ring-2 ring-indigo-500/30 shadow-md shadow-indigo-600/20" data-value="classic">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Natural</span>
+                        <span class="filter-check text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Warna Asli</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-indigo-300">Original</span>
+                    </div>
+                </button>
+
+                <!-- 2. Dreamy -->
+                <button type="button" onclick="setFilter('dreamy', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="dreamy">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Dreamy</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Soft Glow Pastel</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-pink-300">Viral</span>
+                    </div>
+                </button>
+
+                <!-- 3. Glitch -->
+                <button type="button" onclick="setFilter('glitch', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="glitch">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Glitch</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">RGB Shift Split</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-cyan-300">Cyber</span>
+                    </div>
+                </button>
+
+                <!-- 4. Warm -->
+                <button type="button" onclick="setFilter('warm', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="warm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Warm</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Golden Sunset</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-amber-300">Sunset</span>
+                    </div>
+                </button>
+
+                <!-- 5. Cool -->
+                <button type="button" onclick="setFilter('cool', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="cool">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Cool</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Moody Teal Film</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-teal-300">Cinematic</span>
+                    </div>
+                </button>
+
+                <!-- 6. B&W -->
+                <button type="button" onclick="setFilter('bw', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="bw">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">B&W</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Monochrome Klasik</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-slate-300">Classic</span>
+                    </div>
+                </button>
+
+                <!-- 7. Vintage -->
+                <button type="button" onclick="setFilter('vintage', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="vintage">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Vintage</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Sepia Nostalgia</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-yellow-600">Retro</span>
+                    </div>
+                </button>
+
+                <!-- 8. Cyberpunk -->
+                <button type="button" onclick="setFilter('cyberpunk', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="cyberpunk">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Cyberpunk</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Neon Purple & Cyan</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-fuchsia-400">Futuristic</span>
+                    </div>
+                </button>
+
+                <!-- 9. High Contrast -->
+                <button type="button" onclick="setFilter('high_contrast', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="high_contrast">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">High Contrast</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">HDR Glowing Tajam</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-rose-300">Sharp Pro</span>
+                    </div>
+                </button>
+
+                <!-- 10. Cartoon -->
+                <button type="button" onclick="setFilter('cartoon', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="cartoon">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Cartoon</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Comic Outline Pop</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-yellow-300">Art</span>
+                    </div>
+                </button>
+
+                <!-- 11. Sketch -->
+                <button type="button" onclick="setFilter('sketch', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="sketch">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Sketch</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Arsiran Pensil</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-neutral-300">Art</span>
+                    </div>
+                </button>
+
+                <!-- 12. Pixel -->
+                <button type="button" onclick="setFilter('pixel', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="pixel">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Pixel</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Retro 8-Bit Game</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-emerald-300">Retro</span>
+                    </div>
+                </button>
+
+                <!-- 13. Vignette -->
+                <button type="button" onclick="setFilter('vignette', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="vignette">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Vignette</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Sudut Gelap Sinematik</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-indigo-300">Focus</span>
+                    </div>
+                </button>
+
+                <!-- 14. Negative -->
+                <button type="button" onclick="setFilter('negative', this)" class="modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10" data-value="negative">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-white">Negative</span>
+                        <span class="filter-check hidden text-[10px] w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">✓</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-white/60">Klise Film Unik</p>
+                        <span class="text-[8px] uppercase tracking-wider font-extrabold text-purple-300">Invert</span>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="pt-3 border-t border-white/10">
+                <button type="button" onclick="closeFilterModal()" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl text-xs font-black tracking-wider transition active:scale-95 shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    <span>SELESAI & GUNAKAN FILTER</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Script Logika & Socket -->
     <script>
         const socket = io();
         let sessionCode = "{{ code }}";
         let isExpiredInitial = {{ 'true' if is_expired else 'false' }};
-        let selectedTemplate = "{{ active_template }}";
+        let selectedTemplate = (function() {
+            const active = "{{ active_template }}";
+            const customs = {{ custom_templates | tojson }};
+            // Jika active adalah 'default' atau kosong, gunakan template pertama yg tersedia
+            if (!active || active === 'default') {
+                return customs.length > 0 ? customs[0] : 'default';
+            }
+            return active;
+        })();
         let selectedFilter = "classic";
         let selectedTimer = 3;
 
@@ -228,6 +554,16 @@
                     document.getElementById('pairing-screen').classList.add('hidden');
                     document.getElementById('expired-screen').classList.add('hidden');
                     document.getElementById('remote-screen').classList.remove('hidden');
+
+                    // Aktifkan flag exit-detection
+                    _sessionActive = true;
+                    _sessionLeft = false;
+
+                    // Reset filter awal remote ke Natural (classic)
+                    const classicBtn = document.querySelector('.modal-filter-btn[data-value="classic"]');
+                    if (typeof setFilter === 'function') {
+                        setFilter('classic', classicBtn);
+                    }
                 } else {
                     if (data.message && data.message.includes('selesai')) {
                         showExpiredScreen(code);
@@ -277,18 +613,77 @@
             if (badge) badge.classList.remove('hidden');
 
             const nameEl = document.getElementById('selected-template-name');
-            if (nameEl) nameEl.innerText = tpl === 'default' ? 'Standar Polos' : tpl;
+            if (nameEl) nameEl.innerText = tpl;
 
             if (navigator.vibrate) navigator.vibrate(30);
         }
 
+        const filterMetadata = {
+            classic: { name: "Natural", desc: "Warna asli natural photobooth" },
+            dreamy: { name: "Dreamy", desc: "Soft glow pastel magis & glowing" },
+            glitch: { name: "Glitch", desc: "Efek RGB chromatic shift split" },
+            warm: { name: "Warm", desc: "Nuansa golden hour hangat sunset" },
+            cool: { name: "Cool", desc: "Cinematic moody teal & cyan" },
+            bw: { name: "B&W", desc: "Monochrome hitam putih klasik" },
+            vintage: { name: "Vintage", desc: "Sepia vintage jadul bernuansa hangat" },
+            cyberpunk: { name: "Cyberpunk", desc: "Neon ungu magenta & cyan futuristik" },
+            high_contrast: { name: "High Contrast", desc: "HDR dramatis tajam & glowing" },
+            cartoon: { name: "Cartoon", desc: "Gaya kartun komik pop & outline" },
+            sketch: { name: "Sketch", desc: "Sketsa coretan pensil realistis" },
+            pixel: { name: "Pixel", desc: "Retro 8-bit arcade pixel art" },
+            vignette: { name: "Vignette", desc: "Sudut gelap sinematik memusat" },
+            negative: { name: "Negative", desc: "Efek klise foto jadul terbalik" }
+        };
+
+        function openFilterModal() {
+            const modal = document.getElementById('filterModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                if (navigator.vibrate) navigator.vibrate(25);
+            }
+        }
+
+        function closeFilterModal() {
+            const modal = document.getElementById('filterModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                if (navigator.vibrate) navigator.vibrate(15);
+            }
+        }
+
         function setFilter(flt, btn) {
             selectedFilter = flt;
-            document.querySelectorAll('.filter-btn').forEach(b => {
-                b.className = "filter-btn p-3 rounded-xl border text-xs font-bold transition bg-white/5 text-white/70 border-white/10 hover:border-white/20";
+            
+            // 1. Update style tombol di dalam modal
+            document.querySelectorAll('.modal-filter-btn').forEach(b => {
+                b.className = "modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10";
+                const check = b.querySelector('.filter-check');
+                if (check) check.classList.add('hidden');
             });
-            btn.className = "filter-btn p-3 rounded-xl border text-xs font-black transition bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30";
+
+            if (btn) {
+                btn.className = "modal-filter-btn relative p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-20 bg-indigo-600/20 border-indigo-500 ring-2 ring-indigo-500/30 shadow-md shadow-indigo-600/20";
+                const check = btn.querySelector('.filter-check');
+                if (check) check.classList.remove('hidden');
+            }
+
+            // 2. Update tampilan compact card di layar utama
+            const meta = filterMetadata[flt] || { name: flt, desc: "Filter terpilih" };
+            const titleEl = document.getElementById('selected-filter-title');
+            const descEl = document.getElementById('selected-filter-desc');
+            const badgeEl = document.getElementById('current-filter-badge');
+
+            if (titleEl) titleEl.innerText = meta.name;
+            if (descEl) descEl.innerText = meta.desc;
+            if (badgeEl) badgeEl.innerText = meta.name;
+
             if (navigator.vibrate) navigator.vibrate(30);
+
+            // 3. Emit event realtime ke server agar live stream di monitor booth langsung berubah
+            socket.emit('preview_filter_change', {
+                code: sessionCode,
+                filter: selectedFilter
+            });
         }
 
         function setTimer(tm, btn) {
@@ -304,7 +699,7 @@
             const shutterBtn = document.getElementById('shutterBtn');
             shutterBtn.disabled = true;
             shutterBtn.classList.add('opacity-50', 'pointer-events-none');
-            shutterBtn.innerHTML = `<span>⏳ MENYIAPKAN KAMERA...</span>`;
+            shutterBtn.innerHTML = `<span>MENYIAPKAN KAMERA...</span>`;
             document.getElementById('shutter-status-info').innerText = "Lihat ke lensa kamera di monitor booth!";
 
             if (navigator.vibrate) navigator.vibrate(100);
@@ -321,7 +716,7 @@
         socket.on('trigger_countdown', function(data) {
             if (data.code === sessionCode) {
                 const shutterBtn = document.getElementById('shutterBtn');
-                shutterBtn.innerHTML = `<span>📸 FOTO ${data.shot}/${data.total} (${data.timer}s)</span>`;
+                shutterBtn.innerHTML = `<span>FOTO ${data.shot}/${data.total} (${data.timer}s)</span>`;
                 document.getElementById('shutter-status-info').innerText = `Bersiap! Jepretan ${data.shot} dari ${data.total}`;
             }
         });
@@ -336,7 +731,7 @@
         socket.on('processing_collage', function(data) {
             if (data.code === sessionCode) {
                 const shutterBtn = document.getElementById('shutterBtn');
-                shutterBtn.innerHTML = `<span>🎨 MERANGKAI KOLASE...</span>`;
+                shutterBtn.innerHTML = `<span>MERANGKAI KOLASE...</span>`;
                 document.getElementById('shutter-status-info').innerText = "Kolase foto sedang dirangkai...";
             }
         });
@@ -350,12 +745,97 @@
 
         socket.on('capture_error', function(data) {
             if (data.code === sessionCode) {
-                alert("Kesalahan: " + data.message);
+                showToast('error', 'Gagal Capture', data.message || 'Terjadi kesalahan pada kamera.');
                 const shutterBtn = document.getElementById('shutterBtn');
                 shutterBtn.disabled = false;
                 shutterBtn.classList.remove('opacity-50', 'pointer-events-none');
-                shutterBtn.innerHTML = `<span>📸 MULAI SESI FOTO</span>`;
+                shutterBtn.innerHTML = `<span>MULAI SESI FOTO</span>`;
                 document.getElementById('shutter-status-info').innerText = "Silakan coba kembali";
+            }
+        });
+
+        // ─────────────────────────────────────────────────────
+        // PROFESSIONAL TOAST NOTIFICATION SYSTEM
+        // ─────────────────────────────────────────────────────
+        const TOAST_ICONS = {
+            success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`,
+            error:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>`,
+            info:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01"/></svg>`,
+            warn:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`,
+        };
+
+        function showToast(type, title, message, duration = 4000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">${TOAST_ICONS[type] || TOAST_ICONS.info}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:800;margin-bottom:2px;">${title}</div>
+                    <div style="font-weight:500;color:rgba(255,255,255,0.65);font-size:11px;line-height:1.5;">${message}</div>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('out');
+                setTimeout(() => toast.remove(), 350);
+            }, duration);
+        }
+
+        function showConfirm(title, message, onYes, yesLabel = 'Ya, Lanjutkan') {
+            const overlay = document.getElementById('confirm-overlay');
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-msg').innerText = message;
+            document.getElementById('confirm-yes').innerText = yesLabel;
+            overlay.style.display = 'flex';
+            document.getElementById('confirm-yes').onclick = () => {
+                overlay.style.display = 'none';
+                onYes();
+            };
+            document.getElementById('confirm-no').onclick = () => {
+                overlay.style.display = 'none';
+            };
+        }
+
+        // ─────────────────────────────────────────────────────
+        // INVALIDASI PIN SAAT MENINGGALKAN HALAMAN
+        // ─────────────────────────────────────────────────────
+        let _sessionActive = false;  // true setelah pairing sukses
+        let _sessionLeft = false;    // pastikan emit hanya sekali
+
+        function emitSessionDisconnect() {
+            if (_sessionActive && !_sessionLeft && sessionCode) {
+                _sessionLeft = true;
+                // Gunakan sendBeacon untuk garantikan pengiriman saat unload
+                const payload = JSON.stringify({ code: sessionCode });
+                if (navigator.sendBeacon) {
+                    // Fallback ke XHR jika socket terputus lebih dulu
+                }
+                socket.emit('session_disconnect', { code: sessionCode });
+            }
+        }
+
+        // Deteksi tab tersembunyi / berpindah aplikasi
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                emitSessionDisconnect();
+            }
+        });
+
+        // Deteksi penutupan tab / navigate away
+        window.addEventListener('beforeunload', () => {
+            emitSessionDisconnect();
+        });
+
+        // Tandai sesi aktif setelah pairing sukses (patch ke performPairing)
+        const _origPerformPairing = performPairing;
+        // Sudah dibaca, patch langsung via socket handler:
+        socket.on('connect', () => {
+            // Re-flag jika sudah pernah pair sebelum reconnect
+            if (document.getElementById('remote-screen') &&
+                !document.getElementById('remote-screen').classList.contains('hidden')) {
+                _sessionActive = true;
+                _sessionLeft = false;
             }
         });
     </script>

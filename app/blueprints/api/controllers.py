@@ -65,6 +65,42 @@ def get_session_options():
     })
 
 
+@socketio.on('preview_filter_change')
+def handle_preview_filter_change(data):
+    filter_name = data.get('filter', 'classic')
+    code = data.get('code')
+    get_camera().set_preview_filter(filter_name)
+    socketio.emit('filter_updated', {'filter': filter_name, 'code': code})
+
+
+@socketio.on('session_disconnect')
+def handle_session_disconnect(data):
+    """Dipanggil ketika pengguna meninggalkan halaman mobile remote.
+    PIN sesi langsung diexpired agar tidak bisa dipakai ulang.
+    """
+    import random
+    code = data.get('code')
+    if not code:
+        return
+
+    session = PhotoSession.query.filter_by(unique_code=code, status='connected').first()
+    if not session:
+        # Juga tangani status waiting (belum pernah capture)
+        session = PhotoSession.query.filter_by(unique_code=code, status='waiting').first()
+    if session:
+        session.status = 'expired'
+        db.session.commit()
+
+    # Reset filter kamera ke natural
+    try:
+        get_camera().set_preview_filter('classic')
+    except Exception:
+        pass
+
+    # Broadcast ke monitor agar langsung buat PIN baru
+    socketio.emit('session_expired_by_remote', {'old_code': code})
+
+
 @socketio.on('start_capture_session')
 def handle_capture(data):
     code = data.get('code')
@@ -154,3 +190,10 @@ def handle_capture(data):
         'redirect_url': redirect_url,
         'drive_link': drive_link
     })
+
+    # Reset filter preview kamera kembali ke standar/classic untuk pelanggan berikutnya
+    try:
+        get_camera().set_preview_filter('classic')
+        socketio.emit('filter_updated', {'filter': 'classic', 'code': code})
+    except Exception:
+        pass

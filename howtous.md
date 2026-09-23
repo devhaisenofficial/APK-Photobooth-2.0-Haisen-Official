@@ -54,5 +54,5 @@ wsproto==1.3.2
 
 
 
-
+pip uninstall eventlet
 perlu instalasi pip install eventlet atau pip install gevent gevent-websocket

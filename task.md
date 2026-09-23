@@ -122,6 +122,17 @@
   - Overlay backdrop dengan efek blur lembut yang menutup sidebar saat diklik
   - Layout topbar adaptif dengan penataan jam, uptime, dan judul halaman yang rapi di berbagai ukuran layar
   - Peningkatan padding responsif (`p-4 sm:p-6 lg:p-8`) dan scrollbar modern
-
-
-
+## FASE 14 — Sistem Siklus PIN Sesi, Auto-Expire 3 Menit, Reset PIN Admin, & Auto-Reset Filter [SELESAI]
+- [x] 14.1 **Auto-Reset Filter Kamera ke Natural**:
+  - Filter kamera dan live stream otomatis di-reset ke `classic` (Natural) setiap kali sesi selesai (`session_finished`) atau monitor kembali ke standby (`/`).
+  - Remote HP otomatis menginisialisasi filter awal ke `classic` saat pairing berhasil.
+- [x] 14.2 **Siklus Hidup Kode PIN Sesi (Anti-Ganti Sembarangan)**:
+  - Kode PIN sesi dipertahankan selama belum digunakan dan berumur ≤ 3 menit (180 detik).
+  - Refresh browser di monitor booth tidak lagi mengganti kode PIN yang sedang aktif.
+  - Kode PIN otomatis diganti jika sesi standby sudah menganggur lebih dari 3 menit tanpa digunakan.
+- [x] 14.3 **Timer Auto-Refresh Standby 3 Menit di Layar Booth**:
+  - Monitor booth (`host/index.html`) memantau durasi standby dan otomatis merefresh PIN + QR Code setelah 3 menit tanpa reload manual.
+- [x] 14.4 **Fitur Reset PIN Sesi Baru dari Admin Panel**:
+  - Endpoint `POST /admin/api/reset-session-pin` dengan autentikasi `@login_required`.
+  - Tombol aksi "Reset PIN Sesi" di topbar Admin (`layout.html`) yang dapat diakses dari halaman admin mana saja.
+  - Sinyal WebSocket `session_pin_reset` memperbarui nomor PIN dan QR Code di monitor booth secara instan tanpa perlu reload manual.
