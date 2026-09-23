@@ -71,6 +71,7 @@ def create_app(config_class=Config):
     from app.blueprints.gallery.routes import gallery_bp
     from app.blueprints.admin.routes import admin_bp
     from app.blueprints.admin.auth import auth_bp
+    from app.blueprints.bilboard.routes import bilboard_bp
 
     app.register_blueprint(host_bp)
     app.register_blueprint(mobile_bp)
@@ -78,6 +79,7 @@ def create_app(config_class=Config):
     app.register_blueprint(gallery_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(bilboard_bp, url_prefix='/bilboard')
 
     # ==========================================
     # SECURITY FILTER & BLOCKED ROUTES HANDLER
@@ -154,4 +156,4 @@ def _seed_admin(app):
         admin.set_password('haisen2024')
         db.session.add(admin)
         db.session.commit()
-        print("✅ Admin default dibuat: admin / haisen2024")
+        print("✅ Admin default dibuat: admin / haisen2024")

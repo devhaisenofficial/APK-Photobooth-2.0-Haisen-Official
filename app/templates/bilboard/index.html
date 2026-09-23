@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billboard Gallery Preview - iOS Style</title>
+    <style>
+        /* =========================================
+           GLOBAL STYLE & RESET
+           ========================================= */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* =========================================
+           VIDEO BACKGROUND & OVERLAY
+           ========================================= */
+        .video-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 1;
+            filter: blur(12px); 
+            -webkit-filter: blur(12px);
+            transform: scale(1.05); 
+        }
+
+        .glass-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.7));
+            z-index: 2; 
+        }
+
+        /* =========================================
+           LAYOUT GRID
+           ========================================= */
+        .billboard-container {
+            position: relative;
+            z-index: 3; 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            width: 100%;
+            height: 100%;
+            gap: 35px; 
+            padding: 40px; 
+            box-sizing: border-box;
+        }
+
+        /* =========================================
+           GLASSMORPHISM "BUBBLE" WIDGETS
+           ========================================= */
+        .zone {
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(35px) saturate(180%);
+            -webkit-backdrop-filter: blur(35px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50px; 
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.2);
+            animation: float 6s ease-in-out infinite; 
+        }
+
+        .top-left {
+            grid-column: 1;
+            grid-row: 1;
+            animation-delay: 0s;
+        }
+
+        .bottom-left {
+            grid-column: 1;
+            grid-row: 2;
+            animation-delay: 2s;
+        }
+
+        .right-side {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        /* =========================================
+           LOGO MENGAMBANG
+           ========================================= */
+        .zone-logo {
+            position: absolute;
+            top: 25px; /* Jarak dari atas */
+            left: 25px; /* Jarak dari kiri */
+            width: 50px; /* Ukuran logo (bisa disesuaikan) */
+            height: auto;
+            z-index: 10; /* Memastikan logo selalu di atas gambar photobooth */
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); /* Memberi bayangan agar menonjol */
+            
+            /* Efek mengambang kecil khusus untuk logonya saja */
+            animation: logoFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* =========================================
+           GAMBAR & ANIMASI MASUK/KELUAR 
+           ========================================= */
+        .gallery-item {
+            position: absolute;
+            max-width: 90%;
+            max-height: 90%;
+            width: auto;
+            height: auto;
+            object-fit: contain; 
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            opacity: 0;
+            z-index: 1; /* Di bawah layer logo */
+            
+            transform: translateY(60px) scale(0.9);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), 
+                        transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .gallery-item.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .gallery-item.exit {
+            opacity: 0;
+            transform: translateY(60px) scale(0.9);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Video Background Loop -->
+    <video class="video-bg" autoplay muted loop playsinline>
+        <source src="{{ url_for('static', filename='video/20260922-0728-41.0298756.mp4') }}" type="video/mp4">
+    </video>
+    
+    <!-- Overlay gelap transparan -->
+    <div class="glass-overlay"></div>
+
+    <!-- Container Grid Utama -->
+    <div class="billboard-container">
+        
+        <!-- Atas Kiri: GIF -->
+        <div class="zone top-left" id="zone-gifs">
+            <!-- Logo Haisen -->
+            <img src="{{ url_for('static', filename='img/haisen_logo.png') }}" class="zone-logo" alt="Haisen Logo">
+        </div>
+        
+        <!-- Bawah Kiri: Temp -->
+        <div class="zone bottom-left" id="zone-temp">
+            <!-- Logo Haisen -->
+            <img src="{{ url_for('static', filename='img/haisen_logo.png') }}" class="zone-logo" alt="Haisen Logo">
+        </div>
+        
+        <!-- Kanan: Collages -->
+        <div class="zone right-side" id="zone-collages">
+            <!-- Logo Haisen -->
+            <img src="{{ url_for('static', filename='img/haisen_logo.png') }}" class="zone-logo" alt="Haisen Logo">
+        </div>
+
+    </div>
+
+    <script>
+        let galleryData = { gifs: [], temp: [], collages: [] };
+
+        async function fetchImages() {
+            try {
+                const response = await fetch("{{ url_for('bilboard.get_images') }}");
+                if (response.ok) {
+                    galleryData = await response.json();
+                }
+            } catch (error) {
+                console.error("Gagal mengambil data gambar:", error);
+            }
+        }
+
+        function updateZone(zoneId, category) {
+            const images = galleryData[category];
+            if (!images || images.length === 0) return;
+
+            const container = document.getElementById(zoneId);
+            const randomImageSrc = images[Math.floor(Math.random() * images.length)];
+            const currentImg = container.querySelector('.gallery-item.active');
+
+            const newImg = document.createElement('img');
+            newImg.src = randomImageSrc;
+            newImg.className = 'gallery-item';
+            
+            container.appendChild(newImg);
+
+            // Reflow DOM
+            void newImg.offsetWidth; 
+
+            if (currentImg) {
+                currentImg.classList.remove('active');
+                currentImg.classList.add('exit');
+                setTimeout(() => currentImg.remove(), 1200);
+            }
+
+            setTimeout(() => {
+                newImg.classList.add('active');
+            }, 50);
+        }
+
+        async function init() {
+            await fetchImages();
+            
+            // Initial load
+            updateZone('zone-gifs', 'gifs');
+            setTimeout(() => updateZone('zone-temp', 'temp'), 400);
+            setTimeout(() => updateZone('zone-collages', 'collages'), 800);
+
+            // Rotasi gambar
+            setInterval(() => {
+                setTimeout(() => updateZone('zone-gifs', 'gifs'), Math.random() * 1500);
+                setTimeout(() => updateZone('zone-temp', 'temp'), Math.random() * 1500);
+                setTimeout(() => updateZone('zone-collages', 'collages'), Math.random() * 1500);
+            }, 3000);
+
+            // Polling background ke server
+            setInterval(fetchImages, 20000);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
