@@ -1,13 +1,16 @@
 import os
 from PIL import Image
 
+# Base dir project (root folder tempat run.py berada)
+_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+
 class GifService:
     """
     Layanan pembuatan animasi GIF photobooth dari foto-foto jepretan mentah
     sesuai target kode sesi (PIN / Session ID).
     """
     def __init__(self):
-        self.output_dir = os.path.join('app', 'static', 'uploads', 'gifs')
+        self.output_dir = os.path.join(_BASE_DIR, 'storage', 'gifs')
         os.makedirs(self.output_dir, exist_ok=True)
 
     def create_gif(self, image_paths, session_code, duration=450, max_width=720):

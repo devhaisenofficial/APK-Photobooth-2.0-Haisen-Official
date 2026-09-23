@@ -81,17 +81,28 @@ def create_app(config_class=Config):
     app.register_blueprint(auth_bp)
     app.register_blueprint(bilboard_bp, url_prefix='/bilboard')
 
+    from app.blueprints.api.controllers import serve_file
+    app.add_url_rule('/files/<file_type>/<filename>', 'root_serve_file', serve_file)
+
     # ==========================================
     # SECURITY FILTER & BLOCKED ROUTES HANDLER
     # ==========================================
     from flask import render_template, request, abort
 
     DANGEROUS_PATTERNS = [
-        'phpmyadmin', 'pma', 'adminer', 'wp-admin', 'wp-login', '.env', '.git',
-        '.sql', 'config.php', 'shell', 'backup', 'eval-stdin', 'cgi-bin',
-        'xmlrpc', 'actuator', 'setup.php', 'composer.json', 'vendor',
-        'console', 'solr', 'boaform', 'autodiscover'
+        'phpmyadmin', 'pma', 'adminer', 'wp-admin', 'wp-login', 'wordpress', '.env', '.git',
+        '.svn', '.hg', '.sql', 'config.php', 'shell', 'backup', 'eval-stdin', 'cgi-bin',
+        'xmlrpc', 'actuator', 'setup.php', 'composer.json', 'package.json', 'vendor',
+        'console', 'solr', 'boaform', 'autodiscover', 'telescope', 'horizon', '.aws',
+        '.ssh', 'id_rsa', 'swagger', 'api-docs', 'server-status', 'web.config',
+        'phpinfo', 'info.php', 'install.php', 'test.php', 'database.sql', 'dump.sql',
+        'db.sql', 'passwd', 'etc/shadow', 'win.ini', 'boot.ini'
     ]
+
+    DANGEROUS_EXTS = (
+        '.php', '.asp', '.aspx', '.jsp', '.jspx', '.cgi', '.sh', '.bash',
+        '.pl', '.sql', '.bak', '.swp', '.rar', '.7z', '.ini', '.conf'
+    )
 
     @app.before_request
     def block_dangerous_requests():
@@ -102,6 +113,13 @@ def create_app(config_class=Config):
                                    error_code='403',
                                    title='Akses Ditolak & Diblokir',
                                    message='Akses ke file atau direktori sistem tersembunyi dilarang.'), 403
+
+        # Blokir ekstensi berbahaya atau probing script asing
+        if any(path.endswith(ext) or (ext + '/') in path for ext in DANGEROUS_EXTS):
+            return render_template('errors/error.html',
+                                   error_code='403',
+                                   title='Akses Ditolak & Diblokir',
+                                   message='Permintaan file berekstensi berbahaya atau script asing diblokir oleh sistem.'), 403
 
         for pattern in DANGEROUS_PATTERNS:
             if pattern in path:

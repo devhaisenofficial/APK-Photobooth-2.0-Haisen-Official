@@ -1,9 +1,18 @@
 import os
 import json
-from flask import Blueprint, render_template, request, url_for
+from flask import Blueprint, render_template, request, url_for, current_app, session as flask_session
 from app.models.session_model import PhotoSession
 
 gallery_bp = Blueprint('gallery', __name__, template_folder='../../templates')
+
+def _storage(subfolder):
+    """Kembalikan path absolut ke subfolder di private storage."""
+    storage_base = current_app.config.get(
+        'PRIVATE_STORAGE_PATH',
+        os.path.join(current_app.root_path, '..', 'storage')
+    )
+    return os.path.join(storage_base, subfolder)
+
 
 @gallery_bp.route('/gallery/<code>')
 def view_gallery(code):
@@ -12,11 +21,15 @@ def view_gallery(code):
     if not session:
         return render_template('gallery/404.html', code=code), 404
 
+    # Berikan token otorisasi sesi browser bagi pengunjung galeri ini
+    flask_session[f'gallery_access_{code}'] = True
+    flask_session['allowed_gallery_code'] = code
+
     # Ambil data kolase
     collage_filename = session.collage_path
     collage_exists = False
     if collage_filename:
-        collage_filepath = os.path.join('app', 'static', 'uploads', 'collages', collage_filename)
+        collage_filepath = os.path.join(_storage('collages'), collage_filename)
         collage_exists = os.path.exists(collage_filepath)
 
     # Ambil data foto-foto mentah
@@ -25,7 +38,7 @@ def view_gallery(code):
         try:
             raw_list = json.loads(session.raw_photos_json)
             for p in raw_list:
-                temp_filepath = os.path.join('app', 'static', 'uploads', 'temp', p)
+                temp_filepath = os.path.join(_storage('temp'), p)
                 if os.path.exists(temp_filepath):
                     raw_photos.append(p)
         except Exception:
@@ -35,11 +48,11 @@ def view_gallery(code):
     gif_filename = session.gif_path
     gif_exists = False
     if gif_filename:
-        gif_filepath = os.path.join('app', 'static', 'uploads', 'gifs', gif_filename)
+        gif_filepath = os.path.join(_storage('gifs'), gif_filename)
         gif_exists = os.path.exists(gif_filepath)
 
-    # Tautan unduh langsung untuk QR Code
-    download_url = url_for('static', filename=f'uploads/collages/{collage_filename}', _external=True) if collage_filename else ''
+    # Tautan unduh aman (melalui serve_file dengan code otorisasi)
+    download_url = url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code, _external=True) if collage_filename else ''
     gallery_share_url = request.base_url
 
     is_host = (request.args.get('from') == 'host')

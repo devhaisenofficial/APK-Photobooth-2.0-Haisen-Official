@@ -33,6 +33,16 @@ app/static/uploads/gifs/*
 app/static/uploads/temp/*
 !app/static/uploads/temp/.gitkeep
 
+# Private storage (tidak boleh publik)
+storage/collages/*
+storage/gifs/*
+storage/temp/*
+storage/templates/*
+!storage/collages/.gitkeep
+!storage/gifs/.gitkeep
+!storage/temp/.gitkeep
+!storage/templates/.gitkeep
+
 # Logs & Temporary files
 *.log
 logs/

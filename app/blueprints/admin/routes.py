@@ -39,11 +39,20 @@ def is_safe_file_in_dir(base_dir, filename):
     safe_name = secure_filename(filename)
     if not safe_name or safe_name != filename:
         return False
-    if not allowed_file(safe_name):
+    if not allowed_file(safe_name) and not safe_name.lower().endswith('.gif'):
         return False
     abs_base = os.path.abspath(base_dir)
     abs_target = os.path.abspath(os.path.join(base_dir, safe_name))
     return abs_target.startswith(abs_base + os.sep) and os.path.exists(abs_target)
+
+
+def _private_storage(subfolder):
+    """Kembalikan path absolut ke subfolder di private storage."""
+    storage_base = current_app.config.get(
+        'PRIVATE_STORAGE_PATH',
+        os.path.join(current_app.root_path, '..', 'storage')
+    )
+    return os.path.join(storage_base, subfolder)
 
 
 def get_setting(key, default=''):
@@ -91,7 +100,7 @@ def dashboard():
 @admin_bp.route('/gallery', strict_slashes=False)
 @login_required
 def gallery():
-    collage_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'collages')
+    collage_dir = _private_storage('collages')
     collages = []
     if os.path.exists(collage_dir):
         for fname in sorted(os.listdir(collage_dir), reverse=True):
@@ -124,7 +133,7 @@ def gallery():
 @admin_bp.route('/gif-gallery', strict_slashes=False)
 @login_required
 def gif_gallery():
-    gif_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'gifs')
+    gif_dir = _private_storage('gifs')
     gifs = []
     if os.path.exists(gif_dir):
         for fname in sorted(os.listdir(gif_dir), reverse=True):
@@ -135,7 +144,7 @@ def gif_gallery():
             # Extract session code from filename pattern gif_<code>_<hash>.gif
             parts = fname.replace('.gif', '').split('_')
             session_code = parts[1] if len(parts) >= 2 else '-'
-            gif_url = url_for('static', filename=f'uploads/gifs/{fname}', _external=True)
+            gif_url = url_for('api.serve_file', file_type='gifs', filename=fname, _external=True)
             gifs.append({
                 'filename': fname,
                 'url': gif_url,
@@ -149,7 +158,7 @@ def gif_gallery():
 @admin_bp.route('/templates', methods=['GET', 'POST'], strict_slashes=False)
 @login_required
 def templates():
-    template_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'templates')
+    template_dir = _private_storage('templates')
     os.makedirs(template_dir, exist_ok=True)
 
     if request.method == 'POST':
@@ -202,7 +211,7 @@ def templates():
 @admin_bp.route('/editor', methods=['GET', 'POST'], strict_slashes=False)
 @login_required
 def editor_panel():
-    template_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'templates')
+    template_dir = _private_storage('templates')
     os.makedirs(template_dir, exist_ok=True)
     uploaded_templates = sorted(os.listdir(template_dir)) if os.path.exists(template_dir) else []
 
@@ -321,7 +330,7 @@ def api_chart_data():
 @login_required
 def api_gallery_detail(filename):
     """Detail satu collage untuk modal."""
-    collage_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'collages')
+    collage_dir = _private_storage('collages')
     if not is_safe_file_in_dir(collage_dir, filename):
         return jsonify({'error': 'File tidak valid atau tidak ditemukan'}), 404
 
@@ -346,7 +355,7 @@ def api_gallery_detail(filename):
         except Exception:
             raw_photos = []
 
-    download_url = url_for('static', filename=f'uploads/collages/{filename}', _external=True)
+    download_url = url_for('api.serve_file', file_type='collages', filename=filename, _external=True)
 
     return jsonify({
         'filename': filename,
@@ -406,8 +415,8 @@ def api_reset_data():
         PhotoSession.query.delete()
         db.session.commit()
 
-        for folder in ['collages', 'temp']:
-            fdir = os.path.join(current_app.root_path, 'static', 'uploads', folder)
+        for folder in ['collages', 'temp', 'gifs']:
+            fdir = _private_storage(folder)
             if os.path.exists(fdir):
                 shutil.rmtree(fdir)
                 os.makedirs(fdir, exist_ok=True)
@@ -473,7 +482,7 @@ def api_generate_gif(code):
     session.gif_path = gif_filename
     db.session.commit()
 
-    gif_url = url_for('static', filename=f'uploads/gifs/{gif_filename}', _external=True)
+    gif_url = url_for('api.serve_file', file_type='gifs', filename=gif_filename, _external=True)
     return jsonify({'success': True, 'gif_url': gif_url, 'gif_filename': gif_filename})
 
 
@@ -486,7 +495,7 @@ def raw_gallery():
         PhotoSession.raw_photos_json != '[]'
     ).order_by(PhotoSession.id.desc()).all()
 
-    temp_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'temp')
+    temp_dir = _private_storage('temp')
     grouped = []
     for s in sessions:
         try:
@@ -503,7 +512,7 @@ def raw_gallery():
                 stat = os.stat(fpath)
                 photos.append({
                     'filename': fname,
-                    'url': url_for('static', filename=f'uploads/temp/{fname}', _external=True),
+                    'url': url_for('api.serve_file', file_type='temp', filename=fname, code=s.unique_code, _external=True),
                     'size': round(stat.st_size / 1024, 1),
                 })
         if photos:
@@ -524,7 +533,7 @@ def api_download_raw_zip(code):
     if not is_safe_code(code):
         return jsonify({'error': 'Kode sesi tidak valid'}), 400
 
-    temp_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'temp')
+    temp_dir = _private_storage('temp')
     req_files = request.args.get('files')
 
     if req_files:
@@ -569,7 +578,7 @@ def api_download_selected_zip():
     if not is_safe_code(code):
         code = 'selected'
 
-    temp_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'temp')
+    temp_dir = _private_storage('temp')
     valid_files = [f for f in candidate_files if is_safe_file_in_dir(temp_dir, f)][:MAX_ZIP_ITEMS]
 
     if not valid_files:

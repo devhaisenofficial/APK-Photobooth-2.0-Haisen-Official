@@ -219,7 +219,7 @@
                 {% for tpl in custom_templates %}
                 <div onclick="setTemplate('{{ tpl }}', this)" class="template-card relative flex-shrink-0 w-24 aspect-[2/3] rounded-2xl border-2 p-1 cursor-pointer transition-all duration-200 snap-center {% if active_template == tpl %}border-indigo-500 bg-indigo-600/20 shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-500/30{% else %}border-white/15 bg-white/5 hover:border-white/30{% endif %}" data-value="{{ tpl }}">
                     <div class="w-full h-full rounded-xl bg-black/40 flex items-center justify-center overflow-hidden border border-white/10">
-                        <img src="{{ url_for('static', filename='uploads/templates/' + tpl) }}" class="w-full h-full object-contain p-0.5" alt="{{ tpl }}">
+                        <img src="{{ url_for('api.serve_file', file_type='templates', filename=tpl) }}" class="w-full h-full object-contain p-0.5" alt="{{ tpl }}">
                     </div>
                     <div class="active-badge absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-md {% if active_template != tpl %}hidden{% endif %}">✓</div>
                 </div>

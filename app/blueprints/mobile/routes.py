@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, current_app, session as flask_session
 from app.models.session_model import PhotoSession
 from app.models.admin_model import AppSetting
 
@@ -11,14 +11,21 @@ def index():
     is_expired = False
     not_found = False
 
+    flask_session['mobile_access'] = True
     if code:
+        flask_session[f'gallery_access_{code}'] = True
+        flask_session['allowed_gallery_code'] = code
         session = PhotoSession.query.filter_by(unique_code=code).first()
         if not session:
             not_found = True
         elif session.status == 'completed':
             is_expired = True
 
-    template_dir = os.path.join('app', 'static', 'uploads', 'templates')
+    storage_base = current_app.config.get(
+        'PRIVATE_STORAGE_PATH',
+        os.path.join(current_app.root_path, '..', 'storage')
+    )
+    template_dir = os.path.join(storage_base, 'templates')
     custom_templates = []
     if os.path.exists(template_dir):
         custom_templates = [f for f in sorted(os.listdir(template_dir)) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]

@@ -294,7 +294,9 @@
             }
             if (selectedPhotos.size === 1) {
                 const fname = Array.from(selectedPhotos)[0];
-                url = window.location.origin + '/static/uploads/temp/' + fname;
+                const firstEl = document.querySelector(`.raw-thumb[data-filename="${fname}"]`) || document.querySelector('.raw-thumb.selected');
+                const sessionCode = firstEl ? firstEl.dataset.session : '';
+                url = window.location.origin + '/files/temp/' + encodeURIComponent(fname) + (sessionCode ? '?code=' + sessionCode : '');
                 title = 'Download 1 Foto Terpilih';
                 desc = 'Scan QR untuk membuka dan mengunduh foto mentah terpilih';
                 info = fname;

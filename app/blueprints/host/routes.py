@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, Response, jsonify
+from flask import Blueprint, render_template, request, Response, jsonify, session as flask_session
 from extensions import db, socketio
 from app.models.session_model import PhotoSession
 from app.services.camera_service import CameraService
@@ -52,6 +52,7 @@ def get_or_create_waiting_session():
 
 @host_bp.route('/')
 def index():
+    flask_session['host_access'] = True
     # Pastikan filter preview kamera selalu kembali ke 'classic' (Natural) saat di standby
     try:
         get_camera().set_preview_filter('classic')

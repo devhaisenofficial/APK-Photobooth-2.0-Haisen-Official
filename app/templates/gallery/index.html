@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{% if is_host %}Layar Booth — Hasil Foto Sesi #{{ code }}{% else %}Galeri Foto Anda — Sesi #{{ code }}{% endif %}</title>
+    <title>{% if is_host %}Layar Booth â€” Hasil Foto Sesi #{{ code }}{% else %}Galeri Foto Anda â€” Sesi #{{ code }}{% endif %}</title>
     <!-- Outfit & Space Grotesk Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -84,7 +84,7 @@
             </div>
             <div>
                 <h1 class="text-sm font-black tracking-widest uppercase text-white/90">HAISEN BOOTH</h1>
-                <p class="text-[11px] font-medium tracking-wider text-indigo-300/70 font-mono-code">SESI FOTO SELESAI • PIN #{{ code }}</p>
+                <p class="text-[11px] font-medium tracking-wider text-indigo-300/70 font-mono-code">SESI FOTO SELESAI â€¢ PIN #{{ code }}</p>
             </div>
         </div>
 
@@ -106,7 +106,7 @@
                 
                 <div class="relative w-full max-w-md aspect-[2/3] max-h-[72vh] bg-white/[0.06] backdrop-blur-2xl p-3.5 rounded-[36px] border border-white/20 floating-card-glow flex items-center justify-center overflow-hidden">
                     {% if collage_exists %}
-                    <img src="{{ url_for('static', filename='uploads/collages/' + collage_filename) }}" class="w-full h-full object-contain rounded-2xl shadow-2xl" alt="Hasil Foto Kolase">
+                    <img src="{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}" class="w-full h-full object-contain rounded-2xl shadow-2xl" alt="Hasil Foto Kolase">
                     {% else %}
                     <div class="text-center text-white/50 p-8">
                         <div class="w-12 h-12 border-3 border-indigo-400 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
@@ -173,7 +173,7 @@
                     </span>
                     <span class="text-[10px] text-white/50 font-medium">Animasi Photobooth</span>
                 </div>
-                <img src="{{ url_for('static', filename='uploads/gifs/' + gif_filename) }}"
+                <img src="{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}"
                      class="w-full h-auto object-contain"
                      alt="GIF Photobooth Animasi Loop">
             </div>
@@ -185,7 +185,7 @@
 
     <!-- Footer Host -->
     <footer class="w-full max-w-6xl mx-auto flex items-center justify-between text-xs text-white/40 pt-4 border-t border-white/10 z-10">
-        <p>© 2024 Haisen Self Photo Booth • Thank you for your visit</p>
+        <p>Â© 2024 Haisen Self Photo Booth â€¢ Thank you for your visit</p>
         <span class="font-mono-code text-white/40">HOST: {{ request.host }}</span>
     </footer>
 
@@ -230,7 +230,7 @@
         <div class="relative w-full max-w-md bg-[#0d1322] border border-white/15 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
             <!-- Tombol Tutup -->
             <button type="button" onclick="closeFollowModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-sm transition">
-                ✕
+                âœ•
             </button>
 
             <!-- Header Popup -->
@@ -240,7 +240,7 @@
                         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                     </svg>
                 </div>
-                <h3 class="text-base sm:text-lg font-black text-white">Follow Instagram Resmi Dulu ✨</h3>
+                <h3 class="text-base sm:text-lg font-black text-white">Follow Instagram Resmi Dulu âœ¨</h3>
                 <p class="text-xs text-white/70 leading-relaxed px-2">
                     Untuk membuka fitur unduh dan bagikan foto, silakan follow akun Instagram resmi kami <strong class="text-pink-400 font-bold">@haisen_official</strong>.
                 </p>
@@ -260,7 +260,7 @@
 
                 <button type="button" id="btn-confirm-follow" onclick="confirmFollowed()" class="w-full py-3 bg-white/10 hover:bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2">
                     <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                    <span id="btn-confirm-text">Saya Sudah Follow ✓</span>
+                    <span id="btn-confirm-text">Saya Sudah Follow âœ“</span>
                 </button>
             </div>
 
@@ -306,8 +306,8 @@
         <div class="bg-white/[0.05] backdrop-blur-xl p-4 rounded-3xl border border-white/15 space-y-4 shadow-2xl">
             <div class="aspect-[2/3] bg-black/40 rounded-2xl overflow-hidden border border-white/10 shadow-inner flex items-center justify-center relative group">
                 {% if collage_exists %}
-                <img src="{{ url_for('static', filename='uploads/collages/' + collage_filename) }}" class="w-full h-full object-contain" alt="Hasil Foto Kolase">
-                <a href="{{ url_for('static', filename='uploads/collages/' + collage_filename) }}" target="_blank" class="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md text-white text-[11px] font-bold border border-white/20 shadow-lg flex items-center gap-1.5">
+                <img src="{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}" class="w-full h-full object-contain" alt="Hasil Foto Kolase">
+                <a href="{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}" target="_blank" class="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md text-white text-[11px] font-bold border border-white/20 shadow-lg flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                     Perbesar
                 </a>
@@ -320,7 +320,7 @@
             {% if collage_exists %}
             <div class="space-y-2.5">
                 <!-- Tombol Simpan Foto Kolase Utama -->
-                <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('static', filename='uploads/collages/' + collage_filename) }}', 'haisen_{{ code }}.jpg')" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-2xl text-xs font-black tracking-wider text-center transition active:scale-95 shadow-xl shadow-indigo-600/30 border border-indigo-400/30 flex items-center justify-center gap-2">
+                <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}', 'haisen_{{ code }}.jpg')" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-2xl text-xs font-black tracking-wider text-center transition active:scale-95 shadow-xl shadow-indigo-600/30 border border-indigo-400/30 flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <span>SIMPAN FOTO KE GALERI HP</span>
                 </button>
@@ -350,8 +350,8 @@
 
             <div class="grid grid-cols-4 gap-2.5">
                 {% for raw in raw_photos %}
-                <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('static', filename='uploads/temp/' + raw) }}', '{{ raw }}')" class="aspect-square bg-black/40 rounded-xl overflow-hidden border border-white/15 relative group shadow-sm text-left" title="Unduh Foto Mentah">
-                    <img src="{{ url_for('static', filename='uploads/temp/' + raw) }}" class="w-full h-full object-cover" alt="Raw Shot">
+                <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('api.serve_file', file_type='temp', filename=raw, code=code) }}', '{{ raw }}')" class="aspect-square bg-black/40 rounded-xl overflow-hidden border border-white/15 relative group shadow-sm text-left" title="Unduh Foto Mentah">
+                    <img src="{{ url_for('api.serve_file', file_type='temp', filename=raw, code=code) }}" class="w-full h-full object-cover" alt="Raw Shot">
                     <div class="absolute inset-0 bg-indigo-900/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     </div>
@@ -377,13 +377,13 @@
 
             <!-- GIF Preview Looping -->
             <div class="rounded-2xl overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center min-h-[140px]">
-                <img src="{{ url_for('static', filename='uploads/gifs/' + gif_filename) }}" 
+                <img src="{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}" 
                      class="w-full h-auto object-contain max-h-64 rounded-xl" 
                      alt="Animasi GIF Photobooth Loop">
             </div>
 
             <!-- Tombol Unduh GIF -->
-            <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('static', filename='uploads/gifs/' + gif_filename) }}', 'haisen_gif_{{ code }}.gif')" 
+            <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}', 'haisen_gif_{{ code }}.gif')" 
                class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white rounded-2xl text-xs font-black tracking-wider text-center transition active:scale-95 shadow-xl shadow-purple-600/30 border border-purple-400/30 flex items-center justify-center gap-2">
                 <svg class="w-4 h-4 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 <span>SIMPAN ANIMASI GIF</span>
@@ -394,7 +394,7 @@
 
     <!-- Footer Mobile -->
     <footer class="w-full max-w-md mx-auto text-center py-2 text-[11px] text-white/40 z-10">
-        <p>Haisen Official Photobooth • Tag us @haisen_official</p>
+        <p>Haisen Official Photobooth â€¢ Tag us @haisen_official</p>
     </footer>
 
     <script>
@@ -425,7 +425,7 @@
         function handleOpenInstagram() {
             igOpenedTime = Date.now();
             const btnText = document.getElementById('btn-confirm-text');
-            if (btnText) btnText.innerText = 'Saya Sudah Follow ✓ (Konfirmasi)';
+            if (btnText) btnText.innerText = 'Saya Sudah Follow âœ“ (Konfirmasi)';
         }
 
         // Deteksi ketika user kembali dari aplikasi/tab Instagram
@@ -481,10 +481,10 @@
 
         // Fitur Bagikan Foto
         async function executeShare() {
-            const collageUrl = "{{ url_for('static', filename='uploads/collages/' + collage_filename) if collage_exists else '' }}";
+            const collageUrl = "{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) if collage_exists else '' }}";
             const shareData = {
                 title: 'Haisen Photo Booth',
-                text: 'Lihat keseruan foto kami di Haisen Photo Booth sesi #{{ code }}! Follow @haisen_official ✨',
+                text: 'Lihat keseruan foto kami di Haisen Photo Booth sesi #{{ code }}! Follow @haisen_official âœ¨',
                 url: window.location.href
             };
 
@@ -535,13 +535,13 @@
         function executeDownloadAll() {
             const files = [];
             {% if collage_exists %}
-            files.push({ url: "{{ url_for('static', filename='uploads/collages/' + collage_filename) }}", name: "haisen_{{ code }}_kolase.jpg", label: "Foto Kolase" });
+            files.push({ url: "{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}", name: "haisen_{{ code }}_kolase.jpg", label: "Foto Kolase" });
             {% endif %}
             {% for raw in raw_photos %}
-            files.push({ url: "{{ url_for('static', filename='uploads/temp/' + raw) }}", name: "{{ raw }}", label: "Foto Mentah {{ loop.index }}" });
+            files.push({ url: "{{ url_for('api.serve_file', file_type='temp', filename=raw, code=code) }}", name: "{{ raw }}", label: "Foto Mentah {{ loop.index }}" });
             {% endfor %}
             {% if gif_exists %}
-            files.push({ url: "{{ url_for('static', filename='uploads/gifs/' + gif_filename) }}", name: "haisen_gif_{{ code }}.gif", label: "Animasi GIF" });
+            files.push({ url: "{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}", name: "haisen_gif_{{ code }}.gif", label: "Animasi GIF" });
             {% endif %}
 
             if (files.length === 0) {
@@ -555,7 +555,7 @@
                     downloadSingleFile(file.url, file.name);
                     showToast(`Mengunduh (${index + 1}/${files.length}): ${file.label}`);
                     if (index === files.length - 1) {
-                        setTimeout(() => showToast('Semua file berhasil diunduh! 🎉'), 1200);
+                        setTimeout(() => showToast('Semua file berhasil diunduh! ðŸŽ‰'), 1200);
                     }
                 }, index * 700);
             });

@@ -278,7 +278,7 @@
             drawCanvas();
         } else {
             bgImage = new Image();
-            bgImage.src = `/static/uploads/templates/${encodeURIComponent(val)}`;
+            bgImage.src = `/files/templates/${encodeURIComponent(val)}`;
             bgImage.onload = () => {
                 // Dimensi kanvas SELALU mengikuti dimensi asli file template yang diupload
                 BASE_WIDTH = bgImage.naturalWidth;

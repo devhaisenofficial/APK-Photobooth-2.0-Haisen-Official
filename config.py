@@ -4,9 +4,15 @@ from dotenv import load_dotenv, find_dotenv
 # Memastikan file .env ditemukan dan dimuat secara akurat
 load_dotenv(find_dotenv())
 
+# Base directory project (root folder, sejajar dengan app/)
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY') or 'haisen-photobooth-secret-key-2024'
-    
+
+    # Path penyimpanan private (di luar folder static, tidak bisa diakses langsung via URL)
+    PRIVATE_STORAGE_PATH = os.path.join(BASE_DIR, 'storage')
+
     # Ambil nilai dari .env
     DB_USER = os.getenv('DB_USER')
     DB_PASSWORD = os.getenv('DB_PASSWORD')

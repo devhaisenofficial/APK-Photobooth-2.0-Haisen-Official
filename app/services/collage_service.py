@@ -4,11 +4,16 @@ from PIL import Image, ImageOps, ImageDraw, ImageFont
 from datetime import datetime
 from app.models.admin_model import AppSetting
 
+# Base dir project (root folder tempat run.py berada)
+_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+
 class CollageService:
     def __init__(self):
-        self.output_dir = os.path.join('app', 'static', 'uploads', 'collages')
-        self.template_dir = os.path.join('app', 'static', 'uploads', 'templates')
+        self.output_dir = os.path.join(_BASE_DIR, 'storage', 'collages')
+        self.template_dir = os.path.join(_BASE_DIR, 'storage', 'templates')
         os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(self.template_dir, exist_ok=True)
+
 
     def _get_setting(self, key, default=''):
         try:

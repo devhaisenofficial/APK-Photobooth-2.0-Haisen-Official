@@ -213,7 +213,7 @@ class CameraService:
         berjalan instan tanpa stuck atau freeze.
         """
         self._ensure_camera_running()
-        temp_dir = os.path.join('app', 'static', 'uploads', 'temp')
+        temp_dir = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')), 'storage', 'temp')
         os.makedirs(temp_dir, exist_ok=True)
         filename = f"capture_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.jpg"
         filepath = os.path.join(temp_dir, filename)

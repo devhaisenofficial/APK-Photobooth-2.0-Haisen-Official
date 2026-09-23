@@ -136,3 +136,30 @@
   - Endpoint `POST /admin/api/reset-session-pin` dengan autentikasi `@login_required`.
   - Tombol aksi "Reset PIN Sesi" di topbar Admin (`layout.html`) yang dapat diakses dari halaman admin mana saja.
   - Sinyal WebSocket `session_pin_reset` memperbarui nomor PIN dan QR Code di monitor booth secara instan tanpa perlu reload manual.
+
+---
+
+## FASE 15 — Sistem Penyimpanan Aman (Private Storage) & Otorisasi Akses File [SELESAI]
+- [x] 15.1 **Struktur Private Storage di Luar Folder Web Publik**:
+  - Direktori `storage/` dibuat di root project terisolasi dari jangkauan web server publik (`storage/collages/`, `storage/gifs/`, `storage/temp/`, `storage/templates/`).
+  - `.gitignore` dikonfigurasi agar file pengunjung tidak masuk ke git.
+  - `config.py` dikonfigurasi dengan `PRIVATE_STORAGE_PATH`.
+- [x] 15.2 **Pembaruan Layanan & Generator File**:
+  - `CollageService` (`collage_service.py`): output kolase dan template frame dipindahkan ke `storage/`.
+  - `GifService` (`gif_service.py`): animasi GIF dipindahkan ke `storage/gifs/`.
+  - `CameraService` (`camera_service.py`): foto mentah disimpan ke `storage/temp/`.
+- [x] 15.3 **Endpoint Secure File Serving (`/api/files/<file_type>/<filename>`)**:
+  - Validasi ketat nama file (anti-path traversal dengan `secure_filename` + prefix check) dan whitelist ekstensi (`.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`).
+  - Otorisasi berlapis: Admin dapat mengakses semua file; Pengunjung/smartphone hanya dapat mengakses file milik sesi mereka via parameter `?code=<code>` yang divalidasi ke database `PhotoSession`; Akses tanpa izin otomatis diblokir `403 Forbidden`.
+  - Dukungan URL alias `/files/<file_type>/<filename>`.
+- [x] 15.4 **Migrasi URL & Template Semua Halaman**:
+  - Template Galeri Pengunjung (`gallery/index.html`): Kolase, foto mentah, animasi GIF, dan batch download ZIP/direct beralih ke `serve_file` dengan token `code`.
+  - Template Admin Galeri Kolase (`admin/gallery.html`): Thumbnail kolase dan modal foto mentah diperbarui ke `serve_file`.
+  - Template Admin GIF Galeri (`admin/gif_gallery.html`): Thumbnail GIF dan modal download diperbarui ke `serve_file`.
+  - Template Admin Galeri Foto Mentah (`admin/raw_gallery.html`): Thumbnail, quick preview, dan single QR scan diperbarui ke `serve_file` dengan otorisasi kode sesi.
+  - Template Admin Template Bingkai (`admin/templates.html` & `admin/editor.html`): Thumbnail dan kanvas fabric/editor beralih ke `serve_file`.
+  - Template Mobile Remote (`mobile/index.html` & `mobile/routes.py`): Pilihan frame template membaca dan me-render dari private storage via `serve_file`.
+  - Bilboard Screen (`bilboard/routes.py`): Membaca cache dan menyajikan gambar via `serve_file`.
+- [x] 15.5 **Migrasi Data & Pengujian Integrasi 100%**:
+  - Script `migrate_storage.py` berhasil memindahkan 157 file media lama ke private storage.
+  - Pengujian unauthorized access (403), valid session owner access (200), anti-path traversal (403), dan rendering 9 halaman utama aplikasi photobooth berhasil 100%.
