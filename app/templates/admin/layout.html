@@ -6,7 +6,7 @@
     <title>{% block title %}Admin{% endblock %} — Haisen Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
         
@@ -16,44 +16,61 @@
         ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
         ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
 
+        /* Sidebar Navigation Item Styling (Glass / Neumorphism Touch) */
         .nav-item {
-            display: flex; align-items: center; gap: 11px; padding: 10px 14px;
-            border-radius: 12px; font-size: 13px; font-weight: 500; color: #4b5563;
-            text-decoration: none; transition: all 0.15s ease; margin-bottom: 3px;
+            display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+            border-radius: 14px; font-size: 13px; font-weight: 600; color: #4b5563;
+            text-decoration: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); margin-bottom: 4px;
         }
-        .nav-item:hover { background: #f3f4f6; color: #111827; }
-        .nav-item.active { background: #111827; color: #ffffff; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-        .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+        .nav-item:hover { background: rgba(243, 244, 246, 0.8); color: #111827; transform: translateX(2px); }
+        .nav-item.active { 
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%); 
+            color: #ffffff; 
+            font-weight: 700; 
+            box-shadow: 0 10px 20px -5px rgba(17, 24, 39, 0.3); 
+        }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; transition: transform 0.2s; }
+        .nav-item:hover svg { transform: scale(1.05); }
         .nav-item.active svg { color: #ffffff; }
 
-        .glass-card {
-            background: #ffffff; border: 1px solid #f1f2f4;
-            border-radius: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03), 0 4px 12px rgba(0,0,0,0.02);
+        /* Dashboard & Glassmorphism Card Style */
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 1);
+            border-left: 1px solid rgba(255, 255, 255, 0.8);
+            border-right: 1px solid rgba(243, 244, 246, 0.8);
+            border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 4px 10px -4px rgba(0, 0, 0, 0.02);
         }
-        .stat-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+
+        .stat-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; font-size: 11px; font-weight: 700; }
         .badge-green { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
         .badge-amber { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
         .badge-gray { background: #f9f9fb; color: #6b7280; border: 1px solid #e5e7eb; }
         .badge-blue { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
         
-        .qr-modal-overlay { background: rgba(0,0,0,0.55); backdrop-filter: blur(5px); }
-        .qr-modal-content { animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .qr-modal-overlay { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(6px); }
+        .qr-modal-content { animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
         @keyframes modalIn {
-            from { opacity: 0; transform: scale(0.96) translateY(6px); }
+            from { opacity: 0; transform: scale(0.95) translateY(8px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
         /* Admin Toast Notification */
         #admin-toast-container {
-            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            position: fixed; top: 24px; right: 24px; z-index: 9999;
             display: flex; flex-direction: column; gap: 10px;
-            pointer-events: none; min-width: 300px; max-width: 360px;
+            pointer-events: none; min-width: 320px; max-width: 380px;
         }
         .admin-toast {
             display: flex; align-items: flex-start; gap: 12px;
-            padding: 14px 16px; border-radius: 14px;
-            background: #fff; border: 1px solid #e5e7eb;
-            box-shadow: 0 10px 30px -8px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+            padding: 14px 18px; border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.05);
             pointer-events: all;
             animation: toastSlideIn 0.3s cubic-bezier(0.16,1,0.3,1) both;
             transition: opacity 0.25s, transform 0.25s;
@@ -63,36 +80,37 @@
             from { opacity: 0; transform: translateX(20px); }
             to   { opacity: 1; transform: translateX(0); }
         }
-        .admin-toast-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .admin-toast.success .admin-toast-icon { background: #f0fdf4; color: #16a34a; }
-        .admin-toast.error   .admin-toast-icon { background: #fff1f2; color: #e11d48; }
-        .admin-toast.info    .admin-toast-icon { background: #eff6ff; color: #2563eb; }
-        .admin-toast.warn    .admin-toast-icon { background: #fffbeb; color: #d97706; }
+        .admin-toast-icon { width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .admin-toast.success .admin-toast-icon { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .admin-toast.error   .admin-toast-icon { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+        .admin-toast.info    .admin-toast-icon { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        .admin-toast.warn    .admin-toast-icon { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
         .admin-toast-body { flex: 1; min-width: 0; }
-        .admin-toast-title { font-size: 13px; font-weight: 700; color: #111827; margin-bottom: 2px; }
-        .admin-toast-msg   { font-size: 12px; color: #6b7280; line-height: 1.5; }
+        .admin-toast-title { font-size: 13px; font-weight: 800; color: #111827; margin-bottom: 2px; }
+        .admin-toast-msg   { font-size: 12px; color: #6b7280; line-height: 1.5; font-weight: 500; }
 
         /* Admin Confirm Dialog */
         #admin-confirm-overlay {
             position: fixed; inset: 0; z-index: 9998;
-            background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+            background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(6px);
             display: flex; align-items: center; justify-content: center; padding: 20px;
         }
         #admin-confirm-box {
-            background: #fff; border: 1px solid #e5e7eb;
-            border-radius: 20px; padding: 24px;
-            max-width: 380px; width: 100%;
-            box-shadow: 0 20px 60px -10px rgba(0,0,0,0.15);
-            animation: modalIn 0.2s cubic-bezier(0.16,1,0.3,1) both;
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            border-radius: 24px; padding: 28px;
+            max-width: 400px; width: 100%;
+            box-shadow: 0 25px 60px -12px rgba(0,0,0,0.25);
+            animation: modalIn 0.25s cubic-bezier(0.16,1,0.3,1) both;
         }
-        .admin-confirm-icon-wrap { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
-        #admin-confirm-box h4 { font-size: 15px; font-weight: 800; color: #111827; margin-bottom: 6px; }
-        #admin-confirm-box p  { font-size: 13px; color: #6b7280; line-height: 1.6; margin-bottom: 20px; }
-        .admin-confirm-actions { display: flex; gap: 10px; }
-        .admin-confirm-actions button { flex: 1; padding: 11px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; }
-        #admin-confirm-yes { background: #111827; color: #fff; }
-        #admin-confirm-yes:hover { background: #374151; }
-        #admin-confirm-no  { background: #f3f4f6; color: #374151; }
+        .admin-confirm-icon-wrap { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; border: 1px solid #fde68a; }
+        #admin-confirm-box h4 { font-size: 16px; font-weight: 900; color: #111827; margin-bottom: 6px; letter-spacing: -0.025em; }
+        #admin-confirm-box p  { font-size: 13px; color: #6b7280; line-height: 1.6; margin-bottom: 24px; font-weight: 500; }
+        .admin-confirm-actions { display: flex; gap: 12px; }
+        .admin-confirm-actions button { flex: 1; padding: 12px; border-radius: 14px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; }
+        #admin-confirm-yes { background: #111827; color: #fff; box-shadow: 0 4px 12px rgba(17, 24, 39, 0.2); }
+        #admin-confirm-yes:hover { background: #374151; transform: translateY(-1px); }
+        #admin-confirm-no  { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
         #admin-confirm-no:hover  { background: #e5e7eb; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -107,7 +125,7 @@
     <div id="admin-confirm-overlay" style="display:none;">
         <div id="admin-confirm-box">
             <div class="admin-confirm-icon-wrap bg-amber-50" id="admin-confirm-icon-wrap">
-                <svg width="22" height="22" fill="none" stroke="#d97706" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                <svg width="24" height="24" fill="none" stroke="#d97706" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
             </div>
             <h4 id="admin-confirm-title">Konfirmasi</h4>
             <p id="admin-confirm-msg">Apakah Anda yakin?</p>
@@ -119,39 +137,37 @@
     </div>
 
     <!-- Mobile Backdrop Overlay -->
-    <div id="mobile-overlay" onclick="toggleSidebar(false)" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity opacity-0 duration-200"></div>
+    <div id="mobile-overlay" onclick="toggleSidebar(false)" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity opacity-0 duration-200"></div>
 
     <div class="flex h-screen w-full overflow-hidden">
 
         <!-- Sidebar (Static & Locked to Screen Frame) -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 h-full bg-white border-r border-gray-200/80 flex flex-col justify-between py-5 px-3.5 transform -translate-x-full lg:translate-x-0 lg:static flex-shrink-0 overflow-y-auto transition-transform duration-200 ease-in-out shadow-xl lg:shadow-none select-none">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 h-full bg-white/95 backdrop-blur-xl border-r border-gray-200/80 flex flex-col justify-between py-6 px-4 transform -translate-x-full lg:translate-x-0 lg:static flex-shrink-0 overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none select-none">
             <div>
-                <!-- Brand Header -->
-                <div class="flex items-center justify-between px-2 mb-6">
+                <!-- Brand Header dengan Logo Haisen -->
+                <div class="flex items-center justify-between px-2 mb-6 pb-4 border-b border-gray-100">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 bg-gray-900 rounded-xl flex items-center justify-center shadow-md shadow-gray-900/10">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
+                        <div class="w-10 h-10 rounded-xl bg-gray-900 p-1.5 flex items-center justify-center shadow-md shadow-gray-900/10 border border-gray-800 overflow-hidden shrink-0">
+                            <img src="{{ url_for('static', filename='img/haisen_logo.png') }}" alt="Haisen Logo" class="w-full h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="w-full h-full bg-indigo-600 text-white font-black text-xs hidden items-center justify-center">HS</div>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <div class="flex items-center gap-1.5">
-                                <p class="text-sm font-bold text-gray-900 tracking-tight leading-none">HAISEN</p>
-                                <span class="px-1.5 py-0.5 rounded-md bg-gray-100 text-[9px] font-bold text-gray-600">PRO</span>
+                                <p class="text-sm font-black text-gray-900 tracking-tight leading-none">HAISEN</p>
+                                <span class="px-1.5 py-0.5 rounded bg-indigo-50 border border-indigo-100 text-[9px] font-black text-indigo-700">OFFICIAL</span>
                             </div>
-                            <p class="text-[10px] text-gray-400 font-medium leading-none mt-1">Admin Panel v2.0</p>
+                            <p class="text-[10px] text-gray-400 font-semibold leading-none mt-1">Admin Panel v2.0</p>
                         </div>
                     </div>
                     <!-- Close button for Mobile -->
-                    <button type="button" onclick="toggleSidebar(false)" class="lg:hidden p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+                    <button type="button" onclick="toggleSidebar(false)" class="lg:hidden p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
 
                 <!-- Navigation Links -->
-                <nav class="space-y-0.5">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Navigasi Utama</p>
+                <nav class="space-y-1">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-wider px-3 mb-2">Navigasi Utama</p>
 
                     <a href="{{ url_for('admin.dashboard') }}" class="nav-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
@@ -180,7 +196,7 @@
 
                     <a href="{{ url_for('admin.editor_panel') }}" class="nav-item {% if request.endpoint == 'admin.editor_panel' %}active{% endif %}">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        <span>Editor Slot</span>
+                        <span>Canvas Panel</span>
                     </a>
 
                     <a href="{{ url_for('admin.settings') }}" class="nav-item {% if request.endpoint == 'admin.settings' %}active{% endif %}">
@@ -207,34 +223,34 @@
         <main class="flex-1 flex flex-col min-w-0 h-full overflow-y-auto overflow-x-hidden">
 
             <!-- Topbar Header (Sticky to Top of Content) -->
-            <header class="bg-white/95 backdrop-blur border-b border-gray-200/80 px-4 sm:px-6 lg:px-8 py-3.5 sticky top-0 z-30 flex items-center justify-between shadow-xs flex-shrink-0">
+            <header class="dashboard-card bg-white/95 backdrop-blur border-b border-gray-200/80 px-4 sm:px-6 lg:px-8 py-3.5 sticky top-0 z-30 flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-3 min-w-0">
                     <!-- Hamburger button on mobile -->
                     <button type="button" onclick="toggleSidebar(true)" class="lg:hidden p-2 rounded-xl text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     <div class="min-w-0">
-                        <h1 class="text-sm sm:text-base font-bold text-gray-900 truncate tracking-tight">{% block page_title %}Admin Panel{% endblock %}</h1>
-                        <p class="text-[10px] sm:text-[11px] text-gray-400 font-medium truncate" id="current-date">Memuat tanggal...</p>
+                        <h1 class="text-sm sm:text-base font-black text-gray-900 truncate tracking-tight">{% block page_title %}Admin Panel{% endblock %}</h1>
+                        <p class="text-[10px] sm:text-[11px] text-gray-400 font-semibold truncate mt-0.5" id="current-date">Memuat tanggal...</p>
                     </div>
                 </div>
 
                 <!-- Right Stats & Actions -->
                 <div class="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
                     <!-- Tombol Reset PIN Booth -->
-                    <button type="button" onclick="adminResetSessionPin()" title="Reset kode PIN sesi booth sekarang" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 text-xs font-bold transition shadow-xs active:scale-95">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <button type="button" onclick="adminResetSessionPin()" title="Reset kode PIN sesi booth sekarang" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 text-xs font-bold transition-all shadow-xs active:scale-95">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         <span class="hidden sm:inline">Reset PIN Sesi</span>
                         <span class="sm:hidden">PIN</span>
                     </button>
 
-                    <div class="text-right hidden md:block border-l border-gray-100 pl-3">
-                        <p class="text-[10px] text-gray-400 font-medium leading-none">Uptime</p>
-                        <p class="text-xs font-semibold text-gray-800 font-mono mt-0.5" id="uptime-display">--</p>
+                    <div class="text-right hidden md:block border-l border-gray-200/60 pl-3">
+                        <p class="text-[10px] text-gray-400 font-bold leading-none">Uptime</p>
+                        <p class="text-xs font-black text-gray-800 font-mono mt-0.5" id="uptime-display">--</p>
                     </div>
                     <div class="stat-badge badge-green shadow-xs">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
-                        <span id="server-time" class="font-mono font-bold tracking-wide">--:--:--</span>
+                        <span id="server-time" class="font-mono font-black tracking-wide">--:--:--</span>
                     </div>
                 </div>
             </header>
@@ -244,9 +260,9 @@
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
-                        <div class="mb-4 p-3.5 rounded-2xl text-xs font-semibold flex items-center justify-between gap-3 shadow-xs
-                            {% if category == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200/80
-                            {% else %}bg-rose-50 text-rose-800 border border-rose-200/80{% endif %}">
+                        <div class="mb-4 p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between gap-3 shadow-xs
+                            {% if category == 'success' %}bg-emerald-50 text-emerald-900 border border-emerald-200
+                            {% else %}bg-rose-50 text-rose-900 border border-rose-200{% endif %}">
                             <div class="flex items-center gap-2.5">
                                 {% if category == 'success' %}
                                 <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
@@ -260,7 +276,7 @@
                                 <span>{{ message }}</span>
                             </div>
                             <button type="button" onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 p-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
                         {% endfor %}
@@ -338,7 +354,7 @@
         function adminResetSessionPin() {
             adminConfirm(
                 'Reset PIN Sesi Booth',
-                'Kode PIN aktif akan diexpired dan PIN baru akan digenerate. Monitor booth akan langsung berganti secara realtime.',
+                'Kode PIN aktif saat ini akan kedaluwarsa dan PIN baru akan dibuat secara otomatis. Monitor booth akan langsung berganti secara realtime.',
                 () => {
                     fetch('/admin/api/reset-session-pin', {
                         method: 'POST',
@@ -352,10 +368,10 @@
                                 fetchLiveSessions();
                             }
                         } else {
-                            adminToast('error', 'Gagal Reset PIN', data.message || 'Terjadi kesalahan.');
+                            adminToast('error', 'Gagal Reset PIN', data.message || 'Terjadi kesalahan pada server.');
                         }
                     })
-                    .catch(err => {
+                    .catch(() => {
                         adminToast('error', 'Kesalahan Jaringan', 'Tidak dapat terhubung ke server.');
                     });
                 },
@@ -384,7 +400,7 @@
                     <div class="admin-toast-msg">${message}</div>
                 </div>
                 <button onclick="this.closest('.admin-toast').remove()" style="margin-left:4px;color:#9ca3af;background:none;border:none;cursor:pointer;padding:2px;flex-shrink:0;">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             `;
             container.appendChild(toast);

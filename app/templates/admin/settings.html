@@ -4,143 +4,176 @@
 {% block page_title %}Pengaturan Sistem Photobooth{% endblock %}
 
 {% block content %}
-<div class="space-y-8 max-w-3xl">
+<style>
+    /* Styling Kedalaman Kartu (Dashboard Card) */
+    .dashboard-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(255, 255, 255, 1);
+        border-left: 1px solid rgba(255, 255, 255, 0.8);
+        border-right: 1px solid rgba(243, 244, 246, 0.8);
+        border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 4px 10px -4px rgba(0, 0, 0, 0.02);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .inset-preview {
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="space-y-6 relative z-10 pb-16">
     <!-- Header -->
-    <div>
-        <h2 class="text-lg font-bold text-gray-900 tracking-tight">Konfigurasi Perangkat & Sistem</h2>
-        <p class="text-xs text-gray-500">Kelola kamera aktif, mode output foto, integrasi penyimpanan, dan pemeliharaan data.</p>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+            <h2 class="text-xl font-black text-gray-900 tracking-tight drop-shadow-sm">Konfigurasi Perangkat & Sistem</h2>
+            <p class="text-xs font-medium text-gray-500 mt-0.5">Kelola kamera aktif, mode output foto, integrasi penyimpanan, dan pemeliharaan data sistem.</p>
+        </div>
     </div>
 
-    <!-- Form Utama Pengaturan -->
-    <form method="POST" class="space-y-6">
-        <!-- Section 1: Kamera -->
-        <div class="glass-card p-6 rounded-3xl border border-gray-100/80 shadow-sm bg-white space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    <!-- Form Utama Pengaturan (Grid 2 Kolom agar mengisi ruang kiri & kanan secara seimbang) -->
+    <form method="POST">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            
+            <!-- KOLOM KIRI -->
+            <div class="space-y-6">
+                <!-- Section 1: Kamera -->
+                <div class="dashboard-card p-6 rounded-[1.5rem] space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </div>
+                            <h3 class="text-xs font-black text-gray-900 uppercase tracking-wider">Perangkat Kamera Aktif</h3>
+                        </div>
+                        <button type="button" onclick="detectCameras()" class="px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 shadow-sm flex items-center gap-1.5 transition-all">
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Pindai
+                        </button>
                     </div>
-                    <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Perangkat Kamera Aktif</h3>
-                </div>
-                <button type="button" onclick="detectCameras()" class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 flex items-center gap-1.5 transition">
-                    <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                    Pindai Kamera
-                </button>
-            </div>
 
-            <!-- Dropdown Kamera Terdeteksi -->
-            <div>
-                <label class="text-xs font-semibold text-gray-700 block mb-1.5">Pilih Kamera Terdeteksi</label>
-                <select id="camera-select" onchange="onCameraDropdownChange(this.value)" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition">
-                    <option value="{{ camera_index }}">Gunakan Indeks {{ camera_index }} (Tersimpan Saat Ini)</option>
-                </select>
-            </div>
-
-            <!-- Manual Input & Test Button -->
-            <div class="flex items-center gap-3">
-                <div class="flex-1">
-                    <label class="text-[11px] font-medium text-gray-500 block mb-1">Index Kamera (Manual Override)</label>
-                    <input type="number" name="camera_index" id="camera_index_input" value="{{ camera_index }}" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition" placeholder="0">
-                </div>
-                <div class="pt-5">
-                    <button type="button" onclick="testSelectedCamera()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
-                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Uji Kamera
-                    </button>
-                </div>
-            </div>
-
-            <!-- Feedback Alert Uji Kamera -->
-            <div id="camera-test-result" class="hidden p-3 rounded-xl text-xs font-medium"></div>
-        </div>
-
-        <!-- Section 2: Branding & Mode Output -->
-        <div class="glass-card p-6 rounded-3xl border border-gray-100/80 shadow-sm bg-white space-y-4">
-            <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
-                <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
-                </div>
-                <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Branding & Format Output Foto</h3>
-            </div>
-
-            <div>
-                <label class="text-xs font-semibold text-gray-700 block mb-1.5">Teks Watermark Bawaan</label>
-                <input type="text" name="watermark_text" value="{{ watermark_text }}" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition" placeholder="Contoh: HAISEN OFFICIAL">
-                <p class="text-[10px] text-gray-400 mt-1">Dicetak pada footer template standar jika bingkai tidak menutupi.</p>
-            </div>
-
-            <!-- Mode Simpan Output -->
-            <div>
-                <label class="text-xs font-semibold text-gray-700 block mb-2">Mode Penyimpanan Hasil Foto</label>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <label class="flex items-center gap-2 p-3 rounded-xl border {% if output_mode == 'both' %}border-indigo-600 bg-indigo-50/30 text-indigo-900{% else %}border-gray-200 text-gray-700{% endif %} cursor-pointer text-xs font-medium">
-                        <input type="radio" name="output_mode" value="both" {% if output_mode == 'both' %}checked{% endif %} class="text-indigo-600 focus:ring-indigo-500">
-                        <span>Keduanya (Rekomendasi)</span>
-                    </label>
-                    <label class="flex items-center gap-2 p-3 rounded-xl border {% if output_mode == 'template' %}border-indigo-600 bg-indigo-50/30 text-indigo-900{% else %}border-gray-200 text-gray-700{% endif %} cursor-pointer text-xs font-medium">
-                        <input type="radio" name="output_mode" value="template" {% if output_mode == 'template' %}checked{% endif %} class="text-indigo-600 focus:ring-indigo-500">
-                        <span>Hanya Hasil Template</span>
-                    </label>
-                    <label class="flex items-center gap-2 p-3 rounded-xl border {% if output_mode == 'photo' %}border-indigo-600 bg-indigo-50/30 text-indigo-900{% else %}border-gray-200 text-gray-700{% endif %} cursor-pointer text-xs font-medium">
-                        <input type="radio" name="output_mode" value="photo" {% if output_mode == 'photo' %}checked{% endif %} class="text-indigo-600 focus:ring-indigo-500">
-                        <span>Hanya Foto Mentah</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Toggle GIF -->
-            <div class="pt-2">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" name="enable_gif" value="1" {% if enable_gif == '1' %}checked{% endif %} class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                    <!-- Dropdown Kamera Terdeteksi -->
                     <div>
-                        <span class="text-xs font-semibold text-gray-800">Aktifkan Pembuatan Animasi GIF Sesi</span>
-                        <p class="text-[10px] text-gray-400">Menghasilkan file animasi singkat dari rangkaian foto yang diambil.</p>
+                        <label class="text-xs font-bold text-gray-700 block mb-1.5">Pilih Kamera Terdeteksi</label>
+                        <select id="camera-select" onchange="onCameraDropdownChange(this.value)" class="w-full px-3.5 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white inset-preview transition">
+                            <option value="{{ camera_index }}">Gunakan Indeks {{ camera_index }} (Tersimpan Saat Ini)</option>
+                        </select>
                     </div>
-                </label>
-            </div>
-        </div>
 
-        <!-- Section 3: Integrasi Cloud -->
-        <div class="glass-card p-6 rounded-3xl border border-gray-100/80 shadow-sm bg-white space-y-4">
-            <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
-                <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+                    <!-- Manual Input & Test Button -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                            <label class="text-[11px] font-bold text-gray-500 block mb-1">Index Kamera (Manual Override)</label>
+                            <input type="number" name="camera_index" id="camera_index_input" value="{{ camera_index }}" class="w-full px-3.5 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white inset-preview transition" placeholder="0">
+                        </div>
+                        <div class="pt-5">
+                            <button type="button" onclick="testSelectedCamera()" class="px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Uji
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Feedback Alert Uji Kamera -->
+                    <div id="camera-test-result" class="hidden p-3 rounded-xl text-xs font-medium"></div>
                 </div>
-                <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Penyimpanan Cloud (Google Drive)</h3>
+
+                <!-- Section 3: Integrasi Cloud -->
+                <div class="dashboard-card p-6 rounded-[1.5rem] space-y-4">
+                    <div class="flex items-center gap-3 pb-3 border-b border-gray-100">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+                        </div>
+                        <h3 class="text-xs font-black text-gray-900 uppercase tracking-wider">Penyimpanan Cloud (Google Drive)</h3>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 block mb-1.5">Google Drive Folder ID (Jangan Di ganti)</label>
+                        <input type="text" name="gdrive_folder_id" value="{{ gdrive_folder_id }}" class="w-full px-3.5 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-xs font-mono font-bold text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white inset-preview transition" placeholder="Contoh: 1a2B3c4D5e6F7g8H9i0J">
+                        <p class="text-[10px] text-gray-400 mt-1 font-medium">ID folder dari tautan Google Drive untuk upload backup otomatis jika dikonfigurasi.</p>
+                    </div>
+                </div>
             </div>
 
-            <div>
-                <label class="text-xs font-semibold text-gray-700 block mb-1.5">Google Drive Folder ID (Opsional)</label>
-                <input type="text" name="gdrive_folder_id" value="{{ gdrive_folder_id }}" class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white transition" placeholder="Contoh: 1a2B3c4D5e6F7g8H9i0J">
-                <p class="text-[10px] text-gray-400 mt-1">ID folder dari tautan Google Drive untuk upload backup otomatis jika dikonfigurasi.</p>
+            <!-- KOLOM KANAN -->
+            <div class="space-y-6">
+                <!-- Section 2: Branding & Mode Output -->
+                <div class="dashboard-card p-6 rounded-[1.5rem] space-y-4">
+                    <div class="flex items-center gap-3 pb-3 border-b border-gray-100">
+                        <div class="w-9 h-9 rounded-xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                        </div>
+                        <h3 class="text-xs font-black text-gray-900 uppercase tracking-wider">Branding & Format Output</h3>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 block mb-1.5">Teks Watermark Bawaan</label>
+                        <input type="text" name="watermark_text" value="{{ watermark_text }}" class="w-full px-3.5 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:border-indigo-600 focus:bg-white inset-preview transition" placeholder="Contoh: HAISEN OFFICIAL">
+                        <p class="text-[10px] text-gray-400 mt-1 font-medium">Dicetak pada footer template standar jika bingkai tidak menutupi.</p>
+                    </div>
+
+                    <!-- Mode Simpan Output -->
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 block mb-2">Mode Penyimpanan Hasil Foto</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl border {% if output_mode == 'both' %}border-indigo-600 bg-indigo-50/40 text-indigo-900 ring-2 ring-indigo-500/10 shadow-sm{% else %}border-gray-200 text-gray-700 bg-gray-50/50 hover:bg-white{% endif %} cursor-pointer text-xs font-bold transition-all">
+                                <input type="radio" name="output_mode" value="both" {% if output_mode == 'both' %}checked{% endif %} class="text-indigo-600 focus:ring-indigo-500">
+                                <span>Keduanya (Rekomendasi Template & Foto Mentah)</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl border {% if output_mode == 'template' %}border-indigo-600 bg-indigo-50/40 text-indigo-900 ring-2 ring-indigo-500/10 shadow-sm{% else %}border-gray-200 text-gray-700 bg-gray-50/50 hover:bg-white{% endif %} cursor-pointer text-xs font-bold transition-all">
+                                <input type="radio" name="output_mode" value="template" {% if output_mode == 'template' %}checked{% endif %} class="text-indigo-600 focus:ring-indigo-500">
+                                <span>Hanya Hasil Template</span>
+                            </label>
+                            <label class="flex items-center gap-2.5 p-2.5 rounded-xl border {% if output_mode == 'photo' %}border-indigo-600 bg-indigo-50/40 text-indigo-900 ring-2 ring-indigo-500/10 shadow-sm{% else %}border-gray-200 text-gray-700 bg-gray-50/50 hover:bg-white{% endif %} cursor-pointer text-xs font-bold transition-all">
+                                <input type="radio" name="output_mode" value="photo" {% if output_mode == 'photo' %}checked{% endif %} class="text-indigo-600 focus:ring-indigo-500">
+                                <span>Hanya Foto Mentah</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Toggle GIF -->
+                    <div class="pt-1">
+                        <label class="flex items-center gap-3 cursor-pointer bg-gray-50/60 p-3 rounded-xl border border-gray-100 hover:bg-indigo-50/20 transition-all">
+                            <input type="checkbox" name="enable_gif" value="1" {% if enable_gif == '1' %}checked{% endif %} class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                            <div>
+                                <span class="text-xs font-bold text-gray-900">Aktifkan Animasi GIF Sesi</span>
+                                <p class="text-[10px] text-gray-400 font-medium">Membuat file animasi dari rangkaian foto sesi.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
             </div>
+
         </div>
 
-        <!-- Tombol Simpan Konfigurasi -->
-        <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold transition shadow-lg shadow-indigo-600/20 active:scale-98 flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            Simpan Seluruh Pengaturan
-        </button>
+        <!-- Tombol Simpan Konfigurasi (Full Width di bawah grid) -->
+        <div class="mt-6">
+            <button type="submit" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/30 active:scale-[0.99] flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                Simpan Seluruh Pengaturan Sistem
+            </button>
+        </div>
     </form>
 
-    <!-- Section 4: Zona Bahaya / Reset All Data -->
-    <div class="glass-card p-6 rounded-3xl border border-red-200/80 shadow-sm bg-red-50/30 space-y-4">
-        <div class="flex items-center gap-2.5 pb-3 border-b border-red-100">
-            <div class="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    <!-- Section 4: Zona Bahaya / Reset All Data (Full Width di bawah) -->
+    <div class="dashboard-card p-6 rounded-[1.5rem] border border-red-200/80 bg-red-50/20 space-y-4">
+        <div class="flex items-center gap-3 pb-3 border-b border-red-100">
+            <div class="w-9 h-9 rounded-xl bg-red-100 border border-red-200 text-red-600 flex items-center justify-center shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             </div>
             <div>
-                <h3 class="text-xs font-bold text-red-900 uppercase tracking-wider">Zona Bahaya (Danger Zone)</h3>
-                <p class="text-[11px] text-red-600">Aksi ini tidak dapat dibatalkan dan akan menghapus seluruh data photobooth.</p>
+                <h3 class="text-xs font-black text-red-900 uppercase tracking-wider">Zona Bahaya (Danger Zone)</h3>
+                <p class="text-[11px] font-medium text-red-600">Aksi ini bersifat permanen dan akan menghapus seluruh data riwayat photobooth.</p>
             </div>
         </div>
 
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
             <div>
                 <h4 class="text-xs font-bold text-gray-900">Reset Semua Data Sesi & Galeri</h4>
-                <p class="text-[11px] text-gray-500">Menghapus seluruh riwayat sesi di database dan membersihkan file foto (collages & temp).</p>
+                <p class="text-[11px] text-gray-500 font-medium">Menghapus seluruh riwayat sesi di database dan membersihkan file foto (collages & temp).</p>
             </div>
-            <button type="button" onclick="confirmResetAllData()" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm transition active:scale-95 whitespace-nowrap">
+            <button type="button" onclick="confirmResetAllData()" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-md shadow-red-500/20 transition-all active:scale-95 whitespace-nowrap">
                 Hapus Semua Data
             </button>
         </div>

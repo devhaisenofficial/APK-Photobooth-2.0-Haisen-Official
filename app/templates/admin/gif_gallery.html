@@ -5,118 +5,182 @@
 
 {% block extra_head %}
 <style>
-    .gif-card { transition: all 0.2s ease; }
-    .gif-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
-    .gif-preview {
-        aspect-ratio: 1;
-        background: repeating-conic-gradient(#f3f4f6 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+    /* Styling Kedalaman Kartu (Dashboard Card) */
+    .dashboard-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(255, 255, 255, 1);
+        border-left: 1px solid rgba(255, 255, 255, 0.8);
+        border-right: 1px solid rgba(243, 244, 246, 0.8);
+        border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 4px 10px -4px rgba(0, 0, 0, 0.02);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .dashboard-card.hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.08), 0 8px 15px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .inset-preview {
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Pattern kotak-kotak transparan untuk latar belakang GIF */
+    .gif-bg-pattern {
+        background: repeating-conic-gradient(#f3f4f6 0% 25%, transparent 0% 50%) 50% / 14px 14px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="space-y-6">
+<div class="space-y-6 relative z-10 pb-12">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <h2 class="text-lg font-bold text-gray-900 tracking-tight">Galeri Animasi GIF</h2>
-            <p class="text-xs text-gray-500">Semua file GIF hasil sesi photobooth. Klik QR untuk memperbesar dan scan dari smartphone.</p>
+            <h2 class="text-xl font-black text-gray-900 tracking-tight drop-shadow-sm">Galeri Animasi GIF</h2>
+            <p class="text-xs font-medium text-gray-500 mt-1">Semua file GIF hasil sesi photobooth. Klik preview untuk memperbesar.</p>
         </div>
-        <div class="flex items-center gap-2">
-            <span class="text-xs text-gray-500 font-medium">Total:</span>
-            <span class="px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 text-xs font-bold font-mono">{{ gifs|length }} GIF</span>
+        <div class="flex items-center gap-2.5 dashboard-card px-4 py-2 rounded-xl">
+            <span class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Total GIF:</span>
+            <span id="total-items-badge" class="px-2.5 py-1 rounded-lg bg-violet-50 border border-violet-100 text-violet-700 text-xs font-black font-mono shadow-sm">
+                {{ gifs|length }}
+            </span>
         </div>
     </div>
 
-    <!-- Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+    <!-- Grid GIF -->
+    <div id="gif-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-5">
         {% for item in gifs %}
-        <div class="gif-card glass-card rounded-2xl overflow-hidden border border-gray-100/80">
-            <!-- GIF Preview -->
-            <div class="gif-preview rounded-t-2xl overflow-hidden cursor-pointer relative" onclick="openPreview('{{ item.url }}', '{{ item.filename }}')">
-                <img src="{{ item.url }}" class="w-full h-full object-contain" alt="{{ item.filename }}" loading="lazy">
-                <div class="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span class="bg-white/90 backdrop-blur-sm text-gray-900 text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Lihat GIF
+        <!-- Menambahkan class "gif-item" untuk dikontrol pagination JavaScript -->
+        <div class="gif-item dashboard-card hover-lift rounded-2xl overflow-hidden flex flex-col justify-between" style="display: none;">
+            <!-- GIF Preview Area -->
+            <div class="gif-bg-pattern aspect-video overflow-hidden cursor-pointer relative group border-b border-gray-100" onclick="openPreview('{{ item.url }}', '{{ item.filename }}')">
+                <img src="{{ item.url }}" class="w-full h-full object-contain p-2" alt="{{ item.filename }}" loading="lazy">
+                
+                <!-- Hover Overlay -->
+                <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                    <span class="bg-white/95 backdrop-blur-md text-gray-900 text-xs font-bold px-3.5 py-2 rounded-xl shadow-lg flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                        <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Putar GIF
                     </span>
                 </div>
             </div>
 
-            <!-- Info & QR -->
-            <div class="p-3 space-y-3">
+            <!-- Info & QR Section -->
+            <div class="p-4 space-y-3">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-[11px] font-semibold text-gray-800 truncate max-w-[140px]" title="{{ item.filename }}">{{ item.filename }}</p>
-                        <p class="text-[10px] text-gray-400 font-mono">{{ item.size }} KB · {{ item.session_code }}</p>
+                    <div class="min-w-0 pr-2">
+                        <p class="text-xs font-bold text-gray-900 truncate" title="{{ item.filename }}">{{ item.filename }}</p>
+                        <p class="text-[10px] text-gray-400 font-mono mt-0.5">{{ item.size }} KB • Sesi #{{ item.session_code }}</p>
                     </div>
-                    <a href="{{ item.url }}" download class="p-1.5 rounded-lg bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors" title="Download GIF">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <a href="{{ item.url }}" download class="p-2 rounded-xl bg-violet-50 border border-violet-100 text-violet-600 hover:bg-violet-100 hover:shadow-sm transition-all shrink-0" title="Download GIF">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     </a>
                 </div>
 
-                <!-- QR Code -->
-                <div class="bg-gray-50 rounded-xl p-2.5 flex items-center gap-3 cursor-pointer hover:bg-gray-100 transition-colors" onclick="openQrModal('{{ item.url }}', '{{ item.filename }}')">
-                    <div id="qr-{{ loop.index }}" class="flex-shrink-0"></div>
+                <!-- QR Code Box (Compact) -->
+                <div class="bg-gray-50 rounded-xl p-2.5 flex items-center gap-3 cursor-pointer hover:bg-violet-50/50 hover:border-violet-100 border border-gray-100 transition-all group" onclick="openQrModal('{{ item.url }}', '{{ item.filename }}')">
+                    <div id="qr-{{ loop.index }}" class="flex-shrink-0 bg-white p-1.5 rounded-lg border border-gray-200 shadow-sm"></div>
                     <div class="min-w-0">
-                        <p class="text-[10px] font-semibold text-gray-700">Scan QR Download</p>
-                        <p class="text-[9px] text-gray-400 truncate">Klik untuk memperbesar</p>
+                        <p class="text-[11px] font-bold text-gray-800 group-hover:text-violet-700 transition-colors">Scan QR Download</p>
+                        <p class="text-[10px] text-gray-400 truncate">Klik untuk memperbesar</p>
                     </div>
                 </div>
             </div>
         </div>
         {% else %}
-        <div class="col-span-full py-16 text-center text-gray-400 glass-card rounded-2xl p-8 border border-dashed border-gray-200">
-            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
-            <p class="font-medium text-sm text-gray-600">Belum ada GIF yang tersimpan</p>
-            <p class="text-xs text-gray-400 mt-1">Animasi GIF dari sesi photobooth akan otomatis tampil di sini.</p>
+        <div class="col-span-full py-20 text-center dashboard-card rounded-3xl border border-dashed border-gray-300">
+            <div class="w-16 h-16 mx-auto bg-gray-50 rounded-2xl flex items-center justify-center mb-4 border border-gray-100 shadow-sm">
+                <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
+            </div>
+            <p class="font-bold text-gray-600">Belum ada GIF yang tersimpan</p>
+            <p class="text-xs text-gray-400 mt-1.5 font-medium">Animasi GIF dari sesi photobooth akan otomatis tampil di sini.</p>
         </div>
         {% endfor %}
     </div>
+
+    <!-- UI Pagination Advanced (Javascript Powered) -->
+    <div id="pagination-container" class="hidden flex-col md:flex-row items-center justify-between gap-4 mt-8 dashboard-card p-4 rounded-2xl">
+        <div class="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+            <span>Halaman</span>
+            <span id="current-page-info" class="flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-violet-50 text-violet-700 border border-violet-100 shadow-inner font-mono text-xs">1</span>
+            <span>dari</span>
+            <span id="total-pages-info" class="flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-md bg-gray-100 text-gray-700 border border-gray-200 font-mono text-xs">1</span>
+        </div>
+        
+        <nav class="flex items-center gap-1.5 sm:gap-2">
+            <button id="btn-prev" class="p-2.5 sm:px-4 sm:py-2.5 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-violet-50 hover:border-violet-200 hover:text-violet-700 hover:shadow-sm transition-all active:translate-y-0.5 flex items-center gap-1.5 group disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg class="w-4 h-4 text-gray-400 group-hover:text-violet-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                <span class="hidden sm:block">Sebelumnya</span>
+            </button>
+
+            <div id="pagination-numbers" class="hidden md:flex items-center gap-1.5"></div>
+
+            <div id="mobile-current-page" class="md:hidden flex items-center justify-center min-w-[2.5rem] h-10 px-2 text-xs font-black text-violet-700 bg-violet-50 border border-violet-100 rounded-xl cursor-default">
+                1
+            </div>
+
+            <button id="btn-next" class="p-2.5 sm:px-4 sm:py-2.5 text-xs font-bold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-violet-50 hover:border-violet-200 hover:text-violet-700 hover:shadow-sm transition-all active:translate-y-0.5 flex items-center gap-1.5 group disabled:opacity-50 disabled:cursor-not-allowed">
+                <span class="hidden sm:block">Selanjutnya</span>
+                <svg class="w-4 h-4 text-gray-400 group-hover:text-violet-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
+        </nav>
+    </div>
 </div>
 
-<!-- Preview Modal -->
-<div id="preview-modal" class="fixed inset-0 z-50 hidden">
-    <div class="qr-modal-overlay absolute inset-0" onclick="closePreview()"></div>
-    <div class="qr-modal-content absolute inset-4 sm:inset-12 flex flex-col items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden">
-            <div class="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-                <p id="preview-title" class="text-sm font-semibold text-gray-800 truncate"></p>
-                <button onclick="closePreview()" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+<!-- Preview Modal (Glassmorphism) -->
+<div id="preview-modal" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white/95 backdrop-blur-xl rounded-[2rem] max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col border border-white/50 animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/50">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-violet-50 flex items-center justify-center text-violet-600 border border-violet-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                </div>
+                <p id="preview-title" class="text-sm font-bold text-gray-900 truncate">Preview GIF</p>
             </div>
-            <div class="p-4 flex justify-center" style="background: repeating-conic-gradient(#f3f4f6 0% 25%, transparent 0% 50%) 50% / 16px 16px;">
-                <img id="preview-img" src="" class="max-h-[65vh] rounded-xl" alt="GIF Preview">
+            <button onclick="closePreview()" class="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 hover:bg-red-50 hover:text-red-600 hover:border-red-100 text-gray-500 flex items-center justify-center transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-6 gif-bg-pattern flex justify-center items-center">
+            <div class="rounded-2xl overflow-hidden inset-preview border border-gray-200/50 bg-white max-w-full flex justify-center">
+                <img id="preview-img" src="" class="max-h-[60vh] object-contain p-2" alt="GIF Preview">
             </div>
-            <div class="px-5 py-3 border-t border-gray-100 flex justify-end gap-2">
-                <a id="preview-download" href="" download class="px-4 py-2 bg-violet-600 text-white text-xs font-semibold rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    Download
-                </a>
-            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-white/50">
+            <button onclick="closePreview()" class="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-700 bg-white shadow-sm text-xs font-bold hover:bg-gray-50 transition-all">Kembali</button>
+            <a id="preview-download" href="" download class="px-5 py-2.5 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 shadow-md shadow-violet-500/20 transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Unduh GIF
+            </a>
         </div>
     </div>
 </div>
 
-<!-- QR Zoom Modal -->
-<div id="qr-modal" class="fixed inset-0 z-50 hidden">
-    <div class="qr-modal-overlay absolute inset-0" onclick="closeQrModal()"></div>
-    <div class="qr-modal-content absolute inset-0 flex items-center justify-center p-6">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
-            <button onclick="closeQrModal()" class="absolute top-4 right-4 p-1.5 rounded-lg bg-white/80 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors shadow-sm">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-            <div class="mb-4">
-                <div class="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center mx-auto mb-3">
-                    <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
-                </div>
-                <h3 class="text-base font-bold text-gray-900">Scan QR Code</h3>
-                <p class="text-xs text-gray-500 mt-1">Arahkan kamera smartphone ke QR untuk download GIF</p>
+<!-- QR Zoom Modal (Glassmorphism) -->
+<div id="qr-modal" class="fixed inset-0 z-50 hidden bg-gray-900/70 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-[2rem] max-w-sm w-full overflow-hidden shadow-2xl flex flex-col border border-white/20 p-6 text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+            <div class="text-left">
+                <h3 class="text-base font-black text-gray-900 tracking-tight">Scan QR Code</h3>
+                <p class="text-[11px] font-medium text-gray-400">Unduh GIF ke smartphone</p>
             </div>
-            <div id="qr-modal-content" class="flex justify-center mb-4"></div>
-            <p id="qr-modal-filename" class="text-[11px] text-gray-500 font-mono truncate"></p>
+            <button type="button" onclick="closeQrModal()" class="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
         </div>
+
+        <div class="p-4 bg-gray-50 rounded-2xl border border-gray-100 inset-preview flex items-center justify-center mx-auto">
+            <div id="qr-modal-content" class="flex items-center justify-center mix-blend-multiply"></div>
+        </div>
+
+        <p id="qr-modal-filename" class="text-xs font-bold text-violet-700 bg-violet-50 px-3 py-1.5 rounded-lg border border-violet-100 truncate"></p>
+
+        <button type="button" onclick="closeQrModal()" class="w-full py-3 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold transition-all">
+            Tutup Jendela
+        </button>
     </div>
 </div>
 
@@ -124,21 +188,109 @@
 
 {% block extra_scripts %}
 <script>
-    // Generate small QR codes for each card
-    document.addEventListener('DOMContentLoaded', function() {
-        {% for item in gifs %}
-        new QRCode(document.getElementById('qr-{{ loop.index }}'), {
-            text: '{{ item.url }}',
-            width: 48,
-            height: 48,
-            colorDark: '#111827',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.M
-        });
-        {% endfor %}
-    });
+    /* ------------------------- 
+       CLIENT-SIDE PAGINATION JS 
+    ---------------------------- */
+    const itemsPerPage = 12; // Menampilkan 12 item GIF per halaman
+    let currentPage = 1;
+    const gifItems = document.querySelectorAll('.gif-item');
+    const totalItems = gifItems.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
 
-    // Preview modal
+    function initPagination() {
+        if (totalItems <= itemsPerPage) {
+            document.getElementById('pagination-container').style.display = 'none';
+            gifItems.forEach(item => item.style.display = 'flex');
+            generateSmallQrs();
+            return;
+        }
+        
+        document.getElementById('pagination-container').style.display = 'flex';
+        document.getElementById('pagination-container').classList.remove('hidden');
+        goToPage(1);
+    }
+
+    function goToPage(page) {
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+        currentPage = page;
+
+        gifItems.forEach((item, index) => {
+            if (index >= (currentPage - 1) * itemsPerPage && index < currentPage * itemsPerPage) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        updatePaginationUI();
+        generateSmallQrs(); // Render ulang QR kecil untuk item yang sedang aktif di halaman ini
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updatePaginationUI() {
+        document.getElementById('current-page-info').innerText = currentPage;
+        document.getElementById('total-pages-info').innerText = totalPages;
+        document.getElementById('mobile-current-page').innerText = currentPage;
+
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        btnPrev.disabled = currentPage === 1;
+        btnNext.disabled = currentPage === totalPages;
+
+        const numbersContainer = document.getElementById('pagination-numbers');
+        numbersContainer.innerHTML = '';
+        const windowSize = 2;
+
+        for (let p = 1; p <= totalPages; p++) {
+            if (p === 1 || p === totalPages || (p >= currentPage - windowSize && p <= currentPage + windowSize)) {
+                if (p === currentPage) {
+                    numbersContainer.innerHTML += `
+                        <span class="w-10 h-10 flex items-center justify-center text-xs font-black text-white bg-gradient-to-br from-violet-500 to-violet-600 border border-violet-600 rounded-xl shadow-lg shadow-violet-500/40 transform scale-105 cursor-default">
+                            ${p}
+                        </span>`;
+                } else {
+                    numbersContainer.innerHTML += `
+                        <button onclick="goToPage(${p})" class="w-10 h-10 flex items-center justify-center text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-violet-50 hover:text-violet-700 hover:border-violet-200 transition-all">
+                            ${p}
+                        </button>`;
+                }
+            } else if (p === currentPage - windowSize - 1 || p === currentPage + windowSize + 1) {
+                numbersContainer.innerHTML += `<span class="w-8 h-10 flex items-center justify-center text-xs font-black text-gray-300 tracking-widest cursor-default">...</span>`;
+            }
+        }
+    }
+
+    function generateSmallQrs() {
+        // Render QR kecil hanya pada kartu GIF yang sedang tampil di halaman aktif untuk performa optimal
+        const activeItems = document.querySelectorAll('.gif-item');
+        activeItems.forEach((item, index) => {
+            if (item.style.display !== 'none') {
+                const qrContainer = item.querySelector('[id^="qr-"]');
+                if (qrContainer && qrContainer.innerHTML.trim() === '') {
+                    // Ambil url dari gambar GIF di dalam kartu yang bersangkutan
+                    const imgUrl = item.querySelector('img').src;
+                    new QRCode(qrContainer, {
+                        text: imgUrl,
+                        width: 44,
+                        height: 44,
+                        colorDark: '#111827',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                }
+            }
+        });
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => goToPage(currentPage - 1));
+    document.getElementById('btn-next').addEventListener('click', () => goToPage(currentPage + 1));
+    document.addEventListener('DOMContentLoaded', initPagination);
+
+
+    /* ------------------------- 
+       MODAL PREVIEW & ZOOM QR
+    ---------------------------- */
     function openPreview(url, filename) {
         document.getElementById('preview-img').src = url;
         document.getElementById('preview-title').textContent = filename;
@@ -146,19 +298,19 @@
         document.getElementById('preview-modal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
+
     function closePreview() {
         document.getElementById('preview-modal').classList.add('hidden');
         document.body.style.overflow = '';
     }
 
-    // QR zoom modal
     function openQrModal(url, filename) {
         const container = document.getElementById('qr-modal-content');
         container.innerHTML = '';
         new QRCode(container, {
             text: url,
-            width: 220,
-            height: 220,
+            width: 230,
+            height: 230,
             colorDark: '#111827',
             colorLight: '#ffffff',
             correctLevel: QRCode.CorrectLevel.H
@@ -167,12 +319,12 @@
         document.getElementById('qr-modal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
+
     function closeQrModal() {
         document.getElementById('qr-modal').classList.add('hidden');
         document.body.style.overflow = '';
     }
 
-    // ESC to close
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closePreview();
