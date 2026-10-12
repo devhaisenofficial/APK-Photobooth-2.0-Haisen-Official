@@ -59,3 +59,9 @@ $RECYCLE.BIN/
 .idea/
 *.swp
 *.swo
+credentials.json
+token.json
+client_secret.json
+
+app\client_secret.json
+app\credentials.json

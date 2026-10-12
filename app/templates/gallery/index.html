@@ -2,462 +2,571 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{% if is_host %}Layar Booth â€” Hasil Foto Sesi #{{ code }}{% else %}Galeri Foto Anda â€” Sesi #{{ code }}{% endif %}</title>
-    <!-- Outfit & Space Grotesk Font -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>{% if is_host %}Layar Booth — Sesi #{{ code }}{% else %}Galeri Foto — Sesi #{{ code }}{% endif %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
-    <!-- Tailwind CSS CDN -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- QRCode.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        body { font-family: 'Outfit', sans-serif; }
+        :root { --app-bg: #05070d; }
+        * { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Outfit', sans-serif; background-color: var(--app-bg); }
         .font-mono-code { font-family: 'Space Grotesk', monospace; }
-        
-        /* Video Background Styling */
+        .is-hidden { display: none !important; }
+
+        /* ---------- Background (Host) ---------- */
         #bg-video {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            transform: translate(-50%, -50%) scale(1.08);
-            object-fit: cover;
-            filter: blur(16px) brightness(0.55) contrast(1.15);
-            z-index: 0;
-            pointer-events: none;
+            position: fixed; top: 50%; left: 50%; min-width: 100%; min-height: 100%;
+            width: auto; height: auto; transform: translate(-50%, -50%) scale(1.05);
+            object-fit: cover; filter: blur(20px) brightness(0.35) contrast(1.15);
+            z-index: 0; pointer-events: none;
         }
         .cinematic-vignette {
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(circle at center, rgba(10, 15, 30, 0.45) 0%, rgba(3, 7, 18, 0.90) 85%, #030712 100%);
-            z-index: 1;
-            pointer-events: none;
+            position: fixed; inset: 0;
+            background: radial-gradient(circle at center, rgba(5,7,13,0.25) 0%, rgba(3,4,9,0.95) 88%, #000 100%);
+            z-index: 1; pointer-events: none;
         }
-        .cinematic-scanlines {
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(rgba(18, 16, 38, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            background-size: 100% 4px;
-            z-index: 2;
-            opacity: 0.35;
-            pointer-events: none;
+
+        /* ---------- Surfaces ---------- */
+        .glass-card {
+            background: rgba(255,255,255,0.035);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07);
         }
-        .neon-glow-primary {
-            text-shadow: 0 0 30px rgba(99, 102, 241, 0.55), 0 0 60px rgba(99, 102, 241, 0.25);
+
+        /* ---------- Skeleton Shimmer ---------- */
+        .skeleton {
+            position: relative; overflow: hidden;
+            background-color: rgba(255,255,255,0.05);
+            background-image: linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.08) 50%, transparent 80%);
+            background-size: 220% 100%;
+            animation: shimmer 1.5s linear infinite;
         }
-        .floating-card-glow {
-            box-shadow: 0 25px 60px -15px rgba(99, 102, 241, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.12);
+        @keyframes shimmer { 0% { background-position: 180% 0; } 100% { background-position: -80% 0; } }
+
+        /* Gambar fade-in di atas skeleton */
+        .img-fade { opacity: 0; transition: opacity 0.7s ease; }
+        .img-fade.is-loaded { opacity: 1; }
+        .skeleton-img { transition: opacity 0.55s ease 0.1s; }
+
+        /* ---------- Entrance Animations ---------- */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        .anim-up { animation: fadeUp 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+        @keyframes popIn { 0% { transform: scale(0.55); opacity: 0; } 60% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
+        .anim-pop { animation: popIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+        /* ---------- Status Dots ---------- */
+        @keyframes pulseRing {
+            0% { box-shadow: 0 0 0 0 var(--ring, rgba(99,102,241,0.45)); }
+            75% { box-shadow: 0 0 0 6px transparent; }
+            100% { box-shadow: 0 0 0 0 transparent; }
         }
-        @keyframes subtle-float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
+        .status-dot { width: 6px; height: 6px; border-radius: 9999px; flex-shrink: 0; }
+        .dot-process { background: #818cf8; --ring: rgba(99,102,241,0.5); animation: pulseRing 1.6s ease-out infinite; }
+        .dot-ok { background: #34d399; --ring: rgba(52,211,153,0.5); animation: pulseRing 1.6s ease-out infinite; }
+
+        /* ---------- Indeterminate Progress ---------- */
+        .progress-track { position: relative; height: 2px; overflow: hidden; border-radius: 9999px; background: rgba(255,255,255,0.06); }
+        .progress-bar {
+            position: absolute; top: 0; bottom: 0; width: 40%; border-radius: 9999px;
+            background: linear-gradient(90deg, transparent, #6366f1, transparent);
+            animation: indeterminate 1.2s ease-in-out infinite;
         }
-        .animate-subtle-float {
-            animation: subtle-float 6s ease-in-out infinite;
+        @keyframes indeterminate { 0% { left: -40%; } 100% { left: 110%; } }
+
+        /* ---------- Subtle Float (Host) ---------- */
+        @keyframes floatSoft { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        .animate-float { animation: floatSoft 7s ease-in-out infinite; }
+
+        /* ---------- Compact Thumbnail ---------- */
+        .compact-thumb { transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s ease; }
+        .compact-thumb:active { transform: scale(0.92); opacity: 0.85; }
+
+        /* ---------- Bottom Sheet ---------- */
+        .backdrop-enter { animation: fadeIn 0.35s ease-out forwards; }
+        .backdrop-exit { animation: fadeOut 0.28s ease-in forwards; }
+        .sheet-enter { animation: sheetUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .sheet-exit { animation: sheetDown 0.3s cubic-bezier(0.5, 0, 0.75, 0.4) forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes sheetDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+
+        /* ---------- Toast ---------- */
+        #toast-notify {
+            transform: translate(-50%, -24px); opacity: 0; pointer-events: none;
+            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
+        }
+        #toast-notify.show { transform: translate(-50%, 0); opacity: 1; }
+
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 9999px; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
 
 {% if is_host %}
 <!-- ========================================================================= -->
-<!-- TAMPILAN 1: LAYAR HOST (MONITOR KIOS BOOTH / FULL SCREEN SINEMATIK)         -->
+<!-- LAYAR HOST (MONITOR KIOS)                                                 -->
 <!-- ========================================================================= -->
-<body class="bg-black text-white min-h-screen flex flex-col justify-between p-6 sm:p-12 select-none relative overflow-hidden antialiased">
-    
-    <!-- Video Background Sinematik -->
+<body class="text-white min-h-screen flex flex-col p-4 sm:p-8 select-none relative overflow-hidden antialiased">
+
     <video id="bg-video" autoplay loop muted playsinline>
         <source src="{{ url_for('static', filename='video/20260922-0728-41.0298756.mp4') }}" type="video/mp4">
     </video>
     <div class="cinematic-vignette"></div>
-    <div class="cinematic-scanlines"></div>
 
-    <!-- Header Host Monitor Floating -->
-    <header class="w-full max-w-6xl mx-auto flex items-center justify-between pb-4 border-b border-white/10 z-20">
+    <header class="w-full max-w-6xl mx-auto flex items-center justify-between py-4 border-b border-white/[0.07] z-20 anim-up">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-indigo-500/20 backdrop-blur-md border border-indigo-500/40 flex items-center justify-center text-indigo-400 font-black text-lg shadow-lg">
-                H
-            </div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-400/25 flex items-center justify-center text-indigo-300 font-extrabold text-lg">H</div>
             <div>
-                <h1 class="text-sm font-black tracking-widest uppercase text-white/90">HAISEN BOOTH</h1>
-                <p class="text-[11px] font-medium tracking-wider text-indigo-300/70 font-mono-code">SESI FOTO SELESAI â€¢ PIN #{{ code }}</p>
+                <h1 class="text-sm font-bold tracking-[0.18em] uppercase text-white/95">Haisen Booth</h1>
+                <p class="text-[10px] tracking-[0.25em] text-indigo-300/70 font-mono-code mt-0.5">SESI #{{ code }}</p>
             </div>
         </div>
-
-        <!-- Tombol Selesai & Sesi Baru -->
-        <a href="/" class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-bold text-white border border-white/20 transition active:scale-95 backdrop-blur-md flex items-center gap-2 shadow-lg">
-            <span>Selesai & Sesi Baru</span>
-            <svg class="w-3.5 h-3.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        <a href="/" class="px-4 py-2 rounded-full glass-card hover:bg-white/10 text-xs font-semibold text-white/90 transition-all active:scale-95 flex items-center gap-2">
+            <span>Selesai</span>
+            <svg class="w-3.5 h-3.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
     </header>
 
-    <!-- Main Showcase: Foto Kolase + Floating QR Frameless -->
-    <main class="w-full max-w-6xl mx-auto flex-1 my-auto py-6 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center z-10">
-        
-        <!-- Sisi Kiri: Foto Kolase Megah dengan Ambient Glow -->
-        <div class="lg:col-span-7 flex justify-center items-center">
-            <div class="relative group animate-subtle-float">
-                <!-- Soft Glow Aura di Belakang Kolase -->
-                <div class="absolute -inset-4 bg-gradient-to-r from-indigo-500/30 to-purple-600/30 rounded-[40px] blur-3xl opacity-75"></div>
-                
-                <div class="relative w-full max-w-md aspect-[2/3] max-h-[72vh] bg-white/[0.06] backdrop-blur-2xl p-3.5 rounded-[36px] border border-white/20 floating-card-glow flex items-center justify-center overflow-hidden">
-                    {% if collage_exists %}
-                    <img src="{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}" class="w-full h-full object-contain rounded-2xl shadow-2xl" alt="Hasil Foto Kolase">
-                    {% else %}
-                    <div class="text-center text-white/50 p-8">
-                        <div class="w-12 h-12 border-3 border-indigo-400 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                        <p class="text-sm font-semibold">Sedang merangkai kolase...</p>
+    <main class="w-full max-w-6xl mx-auto flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center py-6 z-10">
+        <!-- Showcase Foto -->
+        <section class="lg:col-span-7 flex justify-center anim-up" style="animation-delay:.08s">
+            <div class="relative w-full max-w-[300px] sm:max-w-[340px] lg:max-w-[380px] animate-float">
+                <div class="absolute -inset-5 bg-gradient-to-tr from-indigo-600/25 via-purple-600/15 to-transparent rounded-[40px] blur-3xl opacity-70"></div>
+                <div class="relative w-full aspect-[2/3] max-h-[62vh] glass-card p-3 rounded-[28px] overflow-hidden">
+                    <div class="relative w-full h-full rounded-[20px] overflow-hidden bg-black/40">
+                        {% if collage_exists %}
+                        <div class="skeleton skeleton-img absolute inset-0"></div>
+                        <img data-fade src="{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}" class="img-fade w-full h-full object-contain" alt="Foto Kolase">
+                        {% else %}
+                        <!-- Skeleton Loading -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8">
+                            <div class="skeleton w-2/3 max-w-[170px] aspect-[2/3] rounded-2xl"></div>
+                            <div class="w-32 space-y-1.5">
+                                <div class="skeleton h-1.5 rounded-full"></div>
+                                <div class="skeleton h-1.5 rounded-full w-2/3 mx-auto"></div>
+                            </div>
+                        </div>
+                        <div class="absolute bottom-4 inset-x-0 flex flex-col items-center gap-2">
+                            <span class="text-[9px] font-bold tracking-[0.3em] uppercase text-white/40">Menyusun Kolase</span>
+                            <div class="progress-track w-28"><span class="progress-bar"></span></div>
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Sisi Kanan: Floating Seamless QR Card & Auto-Return Timer -->
-        <div class="lg:col-span-5 space-y-6 flex flex-col items-center lg:items-start text-center lg:text-left">
-            
+        <!-- Info & QR -->
+        <section class="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left gap-5 anim-up" style="animation-delay:.16s">
             <div class="space-y-3">
-                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-bold tracking-widest uppercase">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Siap Diunduh</span>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-400/20">
+                    <span class="status-dot dot-ok"></span>
+                    <span class="text-[10px] font-bold tracking-[0.2em] uppercase text-emerald-400">Selesai Diproses</span>
                 </div>
-                <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight neon-glow-primary">
-                    Bawa Pulang <br>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-indigo-100 to-purple-300">
-                        Kenangan Manismu
-                    </span>
+                <h2 class="text-3xl xl:text-4xl font-extrabold tracking-tight leading-[1.12]">
+                    Bawa Pulang<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300">Kenangan Anda</span>
                 </h2>
-                <p class="text-sm text-white/70 max-w-sm leading-relaxed">
-                    Pindai QR Code di bawah menggunakan kamera ponsel Anda untuk mengunduh kolase foto resolusi tinggi dan foto jepretan mentah.
-                </p>
+                <p class="text-xs text-white/55 max-w-xs leading-relaxed">Pindai QR code dengan kamera smartphone untuk mengunduh foto beresolusi tinggi.</p>
             </div>
 
-            <!-- Floating Frameless QR Box -->
-            <div class="relative bg-white/[0.08] backdrop-blur-2xl p-6 rounded-[32px] border border-white/15 floating-card-glow flex flex-col items-center shadow-2xl">
-                <!-- QR Code Island -->
-                <div class="p-3.5 bg-white rounded-2xl shadow-2xl">
+            <div class="glass-card p-4 rounded-3xl flex flex-col items-center gap-3">
+                <div class="p-2.5 bg-white rounded-2xl">
                     <div id="qrcode-host" class="flex items-center justify-center"></div>
                 </div>
-
-                <div class="flex items-center gap-2 mt-4 text-xs font-mono-code text-white/70">
-                    <span>PIN SESI:</span>
-                    <span class="px-2.5 py-1 rounded-lg bg-white/10 text-indigo-300 font-bold border border-white/10">#{{ code }}</span>
+                <div class="flex items-center gap-2 text-[11px] font-mono-code text-white/70 bg-black/30 px-3.5 py-1.5 rounded-lg border border-white/5">
+                    <span class="text-white/40">PIN</span>
+                    <span class="text-indigo-300 font-bold tracking-[0.2em]">#{{ code }}</span>
                 </div>
             </div>
 
-            <!-- Floating Auto-Return Status -->
-            <div class="w-full max-w-sm bg-white/5 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 flex items-center justify-between text-xs">
-                <div class="flex items-center gap-2.5">
+            <div class="w-full max-w-xs glass-card px-4 py-3 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-2.5 text-xs text-white/60">
                     <span class="relative flex h-2.5 w-2.5">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-400"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-60"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
                     </span>
-                    <span class="text-white/70">Reset otomatis dalam <strong id="host-timer" class="text-indigo-300 font-mono-code font-bold text-sm">25</strong> detik</span>
+                    <span>Reset dalam <strong id="host-timer" class="text-white font-mono-code font-bold">25</strong>s</span>
                 </div>
-                <a href="/" class="px-3 py-1 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold transition text-[11px]">
-                    Reset
-                </a>
+                <a href="/" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold transition active:scale-95">Reset</a>
             </div>
-
-            {% if gif_exists %}
-            <!-- GIF Animasi Preview (Host Monitor) -->
-            <div class="w-full max-w-sm bg-white/[0.05] backdrop-blur-xl rounded-2xl border border-purple-400/20 overflow-hidden shadow-lg shadow-purple-600/10">
-                <div class="flex items-center gap-2 px-4 py-2 border-b border-white/10">
-                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-300 text-[9px] font-black uppercase tracking-wider">
-                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm3 2h6v4H7V5zm8 8v2h1v-2h-1zm-2-2H7v4h6v-4zm2 0h1V9h-1v2zm1-4V5h-1v2h1zM5 5v2H4V5h1zm0 4H4v2h1V9zm-1 4h1v2H4v-2z" clip-rule="evenodd"/></svg>
-                        GIF Loop
-                    </span>
-                    <span class="text-[10px] text-white/50 font-medium">Animasi Photobooth</span>
-                </div>
-                <img src="{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}"
-                     class="w-full h-auto object-contain"
-                     alt="GIF Photobooth Animasi Loop">
-            </div>
-            {% endif %}
-
-        </div>
-
+        </section>
     </main>
 
-    <!-- Footer Host -->
-    <footer class="w-full max-w-6xl mx-auto flex items-center justify-between text-xs text-white/40 pt-4 border-t border-white/10 z-10">
-        <p>Â© 2024 Haisen Self Photo Booth â€¢ Thank you for your visit</p>
-        <span class="font-mono-code text-white/40">HOST: {{ request.host }}</span>
+    <footer class="w-full max-w-6xl mx-auto flex items-center justify-between text-[10px] text-white/25 py-3 border-t border-white/[0.05] z-10 uppercase tracking-[0.2em]">
+        <p>Haisen Photobooth</p>
+        <span class="font-mono-code normal-case tracking-normal">{{ request.host }}</span>
     </footer>
 
     <script>
-        // Render QR Code di Layar Host
-        const qrUrl = "{{ share_url }}";
-        new QRCode(document.getElementById("qrcode-host"), {
-            text: qrUrl,
-            width: 175,
-            height: 175,
-            colorDark: "#0f172a",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
+        (function () {
+            // QR Code
+            const qrSize = window.innerWidth < 1024 ? 140 : 170;
+            new QRCode(document.getElementById('qrcode-host'), {
+                text: "{{ share_url }}", width: qrSize, height: qrSize,
+                colorDark: "#05070d", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H
+            });
 
-        // Auto-Return ke Standby Host setelah 25 detik
-        let remainingSeconds = 25;
-        const timerText = document.getElementById('host-timer');
-        const timerInterval = setInterval(() => {
-            remainingSeconds--;
-            if (timerText) timerText.innerText = remainingSeconds;
-            if (remainingSeconds <= 0) {
-                clearInterval(timerInterval);
-                window.location.href = '/';
-            }
-        }, 1000);
+            // Reveal gambar di atas skeleton
+            document.querySelectorAll('img[data-fade]').forEach((img) => {
+                const reveal = () => {
+                    img.classList.add('is-loaded');
+                    const sk = img.parentElement.querySelector('.skeleton-img');
+                    if (sk) { sk.style.opacity = '0'; setTimeout(() => sk.remove(), 700); }
+                };
+                if (img.complete && img.naturalWidth > 0) requestAnimationFrame(reveal);
+                else {
+                    img.addEventListener('load', reveal, { once: true });
+                    img.addEventListener('error', reveal, { once: true });
+                }
+            });
+
+            // Auto-refresh selama kolase belum siap
+            {% if not collage_exists %}
+            setTimeout(() => window.location.reload(), 4000);
+            {% endif %}
+
+            // Timer sesi
+            let timeLeft = 25;
+            const timerText = document.getElementById('host-timer');
+            const timer = setInterval(() => {
+                timeLeft--;
+                if (timerText) timerText.innerText = timeLeft;
+                if (timeLeft <= 0) { clearInterval(timer); window.location.href = '/'; }
+            }, 1000);
+        })();
     </script>
 </body>
 
 {% else %}
 <!-- ========================================================================= -->
-<!-- TAMPILAN 2: LAYAR REMOTE MOBILE (GALERI SMARTPHONE ELEGAN & LUXURY DARK)     -->
+<!-- LAYAR MOBILE REMOTE (PENGUNJUNG)                                          -->
 <!-- ========================================================================= -->
-<body class="bg-[#090d16] text-white min-h-screen flex flex-col justify-between p-4 sm:p-6 select-none relative overflow-x-hidden antialiased">
-    
-    <!-- Ambient Background Lighting -->
-    <div class="fixed -top-32 -left-32 w-80 h-80 bg-indigo-600/20 rounded-full filter blur-[90px] pointer-events-none"></div>
-    <div class="fixed -bottom-32 -right-32 w-80 h-80 bg-purple-600/20 rounded-full filter blur-[90px] pointer-events-none"></div>
+<body class="text-white min-h-screen flex flex-col select-none relative overflow-x-hidden antialiased">
 
-    <!-- Modal Popup Follow Instagram -->
-    <div id="follow-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
-        <div class="relative w-full max-w-md bg-[#0d1322] border border-white/15 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
-            <!-- Tombol Tutup -->
-            <button type="button" onclick="closeFollowModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-sm transition">
-                âœ•
-            </button>
+    <!-- Ambient Background -->
+    <div class="fixed top-[-12%] left-[-20%] w-[65vw] h-[65vw] bg-indigo-600/[0.16] rounded-full blur-[100px] pointer-events-none"></div>
+    <div class="fixed bottom-[-12%] right-[-20%] w-[65vw] h-[65vw] bg-purple-600/[0.12] rounded-full blur-[100px] pointer-events-none"></div>
 
-            <!-- Header Popup -->
-            <div class="text-center space-y-2 pt-1">
-                <div class="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 shadow-lg shadow-pink-500/25">
-                    <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                    </svg>
-                </div>
-                <h3 class="text-base sm:text-lg font-black text-white">Follow Instagram Resmi Dulu âœ¨</h3>
-                <p class="text-xs text-white/70 leading-relaxed px-2">
-                    Untuk membuka fitur unduh dan bagikan foto, silakan follow akun Instagram resmi kami <strong class="text-pink-400 font-bold">@haisen_official</strong>.
-                </p>
-            </div>
-
-            <!-- Tampilan Popup Iframe Instagram Preview -->
-            <div class="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden border border-white/10 bg-black/60 shadow-inner">
-                <iframe id="ig-iframe" src="https://www.instagram.com/haisen_official/embed" class="w-full h-full border-0" scrolling="yes" allowtransparency="true"></iframe>
-            </div>
-
-            <!-- Tombol Aksi Follow -->
-            <div class="space-y-2.5 pt-1">
-                <a href="https://www.instagram.com/haisen_official/" target="_blank" onclick="handleOpenInstagram()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 via-rose-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white rounded-2xl text-xs font-black tracking-wider text-center transition active:scale-95 shadow-lg shadow-pink-600/30 flex items-center justify-center gap-2">
-                    <span>Buka & Follow @haisen_official</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                </a>
-
-                <button type="button" id="btn-confirm-follow" onclick="confirmFollowed()" class="w-full py-3 bg-white/10 hover:bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                    <span id="btn-confirm-text">Saya Sudah Follow âœ“</span>
-                </button>
-            </div>
-
-            <!-- Status Terdeteksi Follow -->
-            <div id="follow-detected-badge" class="hidden py-2.5 px-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold text-center flex items-center justify-center gap-2">
-                <svg class="w-4 h-4 text-emerald-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                <span>Follow berhasil terkonfirmasi! Melanjutkan...</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast-notify" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#0f172a]/95 backdrop-blur-xl border border-white/20 text-white px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-semibold flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none translate-y-3">
-        <span id="toast-text">Notifikasi</span>
-    </div>
-
-    <!-- Header Mobile Sleek -->
-    <header class="w-full max-w-md mx-auto flex items-center justify-between pb-3.5 pt-1 border-b border-white/10 z-10">
+    <!-- HEADER -->
+    <header class="sticky top-0 w-full z-30 bg-[#05070d]/85 backdrop-blur-xl border-b border-white/[0.06] px-4 py-2.5 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-indigo-500/20 backdrop-blur-md border border-indigo-500/40 flex items-center justify-center font-black text-sm text-indigo-400 shadow-md">
-                H
-            </div>
-            <div>
-                <h1 class="text-sm font-black tracking-tight text-white">Haisen Memories</h1>
-                <p class="text-[10px] text-indigo-300/70 font-mono-code tracking-wider">SESI #{{ code }}</p>
+            <img src="{{ url_for('static', filename='img/haisen_logo.png') }}" alt="Haisen Logo" class="w-8 h-8 object-contain rounded-lg" />
+            <div class="leading-tight">
+                <h1 class="text-[13px] font-bold text-white">Haisen Memories</h1>
+                <p class="text-[9px] text-indigo-300/70 font-mono-code tracking-[0.2em] mt-0.5">SESI #{{ code }}</p>
             </div>
         </div>
-        <span class="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            Siap Disimpan
-        </span>
+        <div class="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1.5">
+            <span class="status-dot dot-ok" style="width:5px;height:5px;"></span>
+            <span class="text-[9px] font-bold tracking-wider text-emerald-400 uppercase">Tersimpan</span>
+        </div>
     </header>
 
-    <!-- Content Mobile Gallery -->
-    <main class="w-full max-w-md mx-auto flex-1 my-5 space-y-5 z-10">
-        <!-- Banner Sukses -->
-        <div class="text-center py-1 space-y-1">
-            <h2 class="text-xl font-black text-white tracking-tight">Foto Kamu Sudah Siap!</h2>
-            <p class="text-xs text-white/60">Simpan hasil foto kolase, foto mentah, dan animasi GIF ke galeri HP Anda.</p>
+    <!-- KONTEN -->
+    <main class="w-full max-w-md mx-auto flex-1 px-4 pt-4 pb-5 space-y-3 relative z-10">
+
+        <div class="anim-up text-center space-y-1.5">
+            <!-- <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                <span class="text-[9px] font-bold tracking-[0.2em] uppercase text-emerald-400">Foto Siap Diunduh</span>
+            </div> -->
+            <p class="text-[11px] text-white/45">Simpan hasil foto ke galeri smartphone Anda.</p>
         </div>
 
-        <!-- Kartu Kolase Foto Utama (Luxury Glassmorphism) -->
-        <div class="bg-white/[0.05] backdrop-blur-xl p-4 rounded-3xl border border-white/15 space-y-4 shadow-2xl">
-            <div class="aspect-[2/3] bg-black/40 rounded-2xl overflow-hidden border border-white/10 shadow-inner flex items-center justify-center relative group">
+        <!-- Kartu Kolase Utama -->
+        <section class="glass-card p-2.5 rounded-3xl anim-up" style="animation-delay:.07s">
+            <div class="relative aspect-[2/3] bg-black/40 rounded-2xl overflow-hidden">
                 {% if collage_exists %}
-                <img src="{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}" class="w-full h-full object-contain" alt="Hasil Foto Kolase">
-                <a href="{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}" target="_blank" class="absolute bottom-3 right-3 px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md text-white text-[11px] font-bold border border-white/20 shadow-lg flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                <div class="skeleton skeleton-img absolute inset-0"></div>
+                <img data-fade src="{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}" class="img-fade w-full h-full object-contain" alt="Foto Kolase">
+                <a href="{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}" target="_blank" class="absolute bottom-2.5 right-2.5 px-2.5 py-1.5 rounded-lg bg-black/60 backdrop-blur-md text-white text-[10px] font-semibold border border-white/10 flex items-center gap-1.5 active:scale-95 transition">
+                    <svg class="w-3 h-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0zM11 8v6M8 11h6"/></svg>
                     Perbesar
                 </a>
                 {% else %}
-                <p class="text-xs text-white/50">File belum tersedia</p>
+                <!-- Skeleton Loading -->
+                <div class="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
+                    <div class="skeleton w-2/3 max-w-[150px] aspect-[2/3] rounded-xl"></div>
+                    <div class="w-28 space-y-1.5">
+                        <div class="skeleton h-1.5 rounded-full"></div>
+                        <div class="skeleton h-1.5 rounded-full w-2/3 mx-auto"></div>
+                    </div>
+                </div>
                 {% endif %}
             </div>
 
-            <!-- Tombol Aksi Mobile Utama -->
             {% if collage_exists %}
-            <div class="space-y-2.5">
-                <!-- Tombol Simpan Foto Kolase Utama -->
-                <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}', 'haisen_{{ code }}.jpg')" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-2xl text-xs font-black tracking-wider text-center transition active:scale-95 shadow-xl shadow-indigo-600/30 border border-indigo-400/30 flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    <span>SIMPAN FOTO KE GALERI HP</span>
+            <div class="grid grid-cols-1 gap-2 pt-2.5">
+                <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}', 'haisen_{{ code }}.jpg')" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white rounded-xl text-[11px] font-extrabold tracking-[0.15em] uppercase transition active:scale-[0.98] shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Simpan ke Galeri
                 </button>
-
-                <!-- Tombol DOWNLOAD SEMUA FILE -->
-                <button type="button" onclick="handleActionWithFollow('download_all')" class="w-full py-3.5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl text-xs font-black tracking-wider text-center transition active:scale-95 shadow-xl shadow-emerald-600/25 border border-emerald-400/30 flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    <span>DOWNLOAD SEMUA (TEMPLATE + MENTAH + GIF)</span>
+                <button type="button" onclick="handleActionWithFollow('download_all')" class="w-full py-2.5 bg-white/[0.06] hover:bg-white/[0.1] text-white/90 rounded-xl text-[10px] font-bold tracking-wide transition active:scale-[0.98] border border-white/10 flex items-center justify-center gap-2">
+                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Unduh Semua (Kolase + Mentahan)
                 </button>
-
-                <!-- Tombol Bagikan Foto -->
-                <button type="button" onclick="handleActionWithFollow('share')" class="w-full py-3 bg-white/10 hover:bg-white/15 text-white rounded-2xl text-xs font-bold border border-white/15 transition active:scale-95 flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3.316 3.316 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3.316 3.316 0 00-5.368-2.684z"/></svg>
-                    <span>Bagikan Foto (WhatsApp / IG)</span>
-                </button>
+            </div>
+            {% else %}
+            <div class="flex items-center justify-center gap-2.5 pt-2.5">
+                <span class="status-dot dot-process"></span>
+                <span class="text-[10px] text-white/50">Menyusun kolase foto</span>
+                <div class="progress-track w-16"><span class="progress-bar"></span></div>
             </div>
             {% endif %}
-        </div>
+        </section>
 
-        <!-- Bagian Foto Mentah Kamera (Raw Shots) -->
+        <!-- Mentahan Grid -->
         {% if raw_photos %}
-        <div class="bg-white/[0.05] backdrop-blur-xl p-4 rounded-3xl border border-white/15 space-y-3 shadow-xl">
-            <div class="flex items-center justify-between pb-2 border-b border-white/10">
-                <h3 class="text-[11px] font-black text-white/80 uppercase tracking-widest">Foto Mentah Kamera ({{ raw_photos|length }})</h3>
-                <span class="text-[10px] text-white/40">Ketuk untuk unduh</span>
+        <section class="glass-card p-3 rounded-2xl space-y-2 anim-up" style="animation-delay:.14s">
+            <div class="flex items-center justify-between">
+                <h3 class="text-[10px] font-bold tracking-[0.15em] uppercase text-white/70">Mentahan Kamera</h3>
+                <span class="text-[9px] text-indigo-300 bg-indigo-500/10 border border-indigo-400/15 px-2 py-0.5 rounded-md font-mono-code">{{ raw_photos|length }} FILE</span>
             </div>
-
-            <div class="grid grid-cols-4 gap-2.5">
+            <div class="grid grid-cols-5 gap-1.5">
                 {% for raw in raw_photos %}
-                <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('api.serve_file', file_type='temp', filename=raw, code=code) }}', '{{ raw }}')" class="aspect-square bg-black/40 rounded-xl overflow-hidden border border-white/15 relative group shadow-sm text-left" title="Unduh Foto Mentah">
-                    <img src="{{ url_for('api.serve_file', file_type='temp', filename=raw, code=code) }}" class="w-full h-full object-cover" alt="Raw Shot">
-                    <div class="absolute inset-0 bg-indigo-900/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    </div>
+                <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('api.serve_file', file_type='temp', filename=raw, code=code) }}', '{{ raw }}')" class="compact-thumb aspect-square bg-black/40 rounded-lg overflow-hidden border border-white/[0.06] relative">
+                    <img src="{{ url_for('api.serve_file', file_type='temp', filename=raw, code=code) }}" class="w-full h-full object-cover opacity-90" alt="Mentahan" loading="lazy">
                 </button>
                 {% endfor %}
             </div>
-        </div>
+        </section>
         {% endif %}
 
-        <!-- Bagian Animasi GIF Photobooth -->
+        <!-- GIF -->
         {% if gif_exists %}
-        <div class="bg-white/[0.05] backdrop-blur-xl p-4 rounded-3xl border border-white/15 space-y-4 shadow-xl">
-            <div class="flex items-center justify-between pb-2 border-b border-white/10">
-                <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-300 text-[10px] font-black uppercase tracking-wider">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm3 2h6v4H7V5zm8 8v2h1v-2h-1zm-2-2H7v4h6v-4zm2 0h1V9h-1v2zm1-4V5h-1v2h1zM5 5v2H4V5h1zm0 4H4v2h1V9zm-1 4h1v2H4v-2z" clip-rule="evenodd"/></svg>
-                        GIF Animasi
-                    </span>
-                    <h3 class="text-[11px] font-black text-white/80 uppercase tracking-widest">Photobooth Loop</h3>
-                </div>
-                <span class="text-[10px] text-white/40">Auto-loop</span>
+        <section class="glass-card p-3 rounded-2xl flex items-center gap-3 anim-up" style="animation-delay:.2s">
+            <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-black/40 border border-white/[0.06] flex-shrink-0">
+                <img src="{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}" class="w-full h-full object-cover" alt="Animasi GIF">
+                <span class="absolute bottom-1 right-1 bg-purple-500/90 text-white text-[7px] font-extrabold px-1 py-0.5 rounded tracking-wider">GIF</span>
             </div>
-
-            <!-- GIF Preview Looping -->
-            <div class="rounded-2xl overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center min-h-[140px]">
-                <img src="{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}" 
-                     class="w-full h-auto object-contain max-h-64 rounded-xl" 
-                     alt="Animasi GIF Photobooth Loop">
+            <div class="flex-1 min-w-0">
+                <h3 class="text-[11px] font-bold text-white/90">Animasi Loop</h3>
+                <p class="text-[9px] text-white/40 mb-2">Format gerak ringan, siap dibagikan.</p>
+                <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}', 'haisen_gif_{{ code }}.gif')" class="w-full py-2 bg-white/[0.06] hover:bg-white/[0.1] text-white/90 rounded-lg text-[10px] font-bold transition active:scale-[0.98] border border-white/10 flex items-center justify-center gap-1.5">
+                    <svg class="w-3 h-3 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Simpan GIF
+                </button>
             </div>
-
-            <!-- Tombol Unduh GIF -->
-            <button type="button" onclick="handleActionWithFollow('download_single', '{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}', 'haisen_gif_{{ code }}.gif')" 
-               class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white rounded-2xl text-xs font-black tracking-wider text-center transition active:scale-95 shadow-xl shadow-purple-600/30 border border-purple-400/30 flex items-center justify-center gap-2">
-                <svg class="w-4 h-4 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                <span>SIMPAN ANIMASI GIF</span>
-            </button>
-        </div>
+        </section>
         {% endif %}
     </main>
 
-    <!-- Footer Mobile -->
-    <footer class="w-full max-w-md mx-auto text-center py-2 text-[11px] text-white/40 z-10">
-        <p>Haisen Official Photobooth â€¢ Tag us @haisen_official</p>
+    <footer class="w-full text-center py-3.5 text-[9px] text-white/25 tracking-wide relative z-10">
+        Haisen Official Photobooth &mdash; @haisen_official
     </footer>
 
+    <!-- ========================================== -->
+    <!-- BOTTOM SHEET MODAL (FOLLOW INSTAGRAM)      -->
+    <!-- ========================================== -->
+    <div id="follow-modal" class="fixed inset-0 z-50 is-hidden flex-col justify-end">
+        <div id="modal-backdrop" class="absolute inset-0 bg-black/75 backdrop-blur-sm" onclick="closeFollowModal()"></div>
+
+        <div id="modal-content" class="relative w-full max-w-md mx-auto bg-[#080b13] border-t border-white/10 rounded-t-[28px] shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col max-h-[92vh]">
+            <div class="w-full flex justify-center pt-3 pb-1 absolute top-0 inset-x-0 z-10 cursor-pointer" onclick="closeFollowModal()">
+                <div class="w-10 h-1 bg-white/20 rounded-full"></div>
+            </div>
+
+            <div class="px-5 pb-7 pt-9 overflow-y-auto space-y-4">
+                <!-- Header -->
+                <div class="text-center space-y-1.5">
+                    <div class="inline-flex p-2.5 rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 shadow-lg shadow-rose-500/20">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-extrabold text-white">Buka Akses Unduh</h3>
+                    <p class="text-[11px] text-white/55 leading-relaxed px-2">
+                        Follow <strong class="text-white font-semibold">@haisen_official</strong> untuk membuka akses penyimpanan foto Anda.
+                    </p>
+                </div>
+
+                <!-- Kartu Profil -->
+                <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 flex items-center gap-3.5">
+                    <div class="relative flex-shrink-0">
+                        <div class="absolute -inset-0.5 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 rounded-full"></div>
+                        <div class="relative bg-[#080b13] p-0.5 rounded-full">
+                            <img src="{{ url_for('static', filename='img/haisen_logo.png') }}" alt="Haisen Logo" class="w-8 h-8 object-contain rounded-lg" />
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <h4 class="text-[13px] font-bold text-white">Haisen Official</h4>
+                            <svg class="w-3.5 h-3.5 text-sky-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>
+                            </svg>
+                        </div>
+                        <p class="text-[10px] text-white/45">@haisen_official</p>
+                        <div class="flex items-center gap-3 mt-1 text-[9px]">
+                            <span><strong class="text-white">10+</strong> <span class="text-white/40">Postingan</span></span>
+                            <span><strong class="text-white">1K+</strong> <span class="text-white/40">TargetPengikut</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aksi -->
+                <div class="space-y-2.5 pt-1">
+                    <a href="https://www.instagram.com/haisen_official/" target="_blank" onclick="handleOpenInstagram()" id="btn-open-ig" class="w-full py-3.5 bg-gradient-to-r from-rose-600 via-pink-600 to-purple-600 hover:opacity-90 text-white rounded-xl text-[11px] font-extrabold tracking-[0.15em] uppercase text-center transition active:scale-[0.98] shadow-[0_8px_20px_-6px_rgba(219,39,119,0.5)] flex items-center justify-center gap-2">
+                        <span>Buka &amp; Follow Instagram</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>
+
+                    <button type="button" id="btn-confirm-follow" onclick="confirmFollowed()" class="is-hidden w-full py-3.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span id="btn-confirm-text">Saya Sudah Follow</span>
+                    </button>
+
+                    <div id="follow-detected-badge" class="is-hidden anim-pop rounded-xl bg-emerald-500/15 border border-emerald-400/30 px-4 py-3 text-[11px] font-bold text-emerald-300 flex items-center justify-center gap-2">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span>Akses Dibuka &mdash; Menyimpan File</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast-notify" class="fixed top-5 left-1/2 z-[70]" aria-live="polite">
+        <div class="glass-card flex items-center gap-2.5 pl-3 pr-4 py-2.5 rounded-full">
+            <span class="w-5 h-5 rounded-full bg-indigo-500/15 border border-indigo-400/25 flex items-center justify-center flex-shrink-0">
+                <svg class="w-2.5 h-2.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            </span>
+            <span id="toast-text" class="text-[11px] font-semibold text-white/90 text-center">Notifikasi</span>
+        </div>
+    </div>
+
     <script>
-        // State Follow IG & Pending Action
+        // ============ Skeleton -> Fade-in gambar ============
+        document.querySelectorAll('img[data-fade]').forEach((img) => {
+            const reveal = () => {
+                img.classList.add('is-loaded');
+                const sk = img.parentElement.querySelector('.skeleton-img');
+                if (sk) { sk.style.opacity = '0'; setTimeout(() => sk.remove(), 700); }
+            };
+            if (img.complete && img.naturalWidth > 0) requestAnimationFrame(reveal);
+            else {
+                img.addEventListener('load', reveal, { once: true });
+                img.addEventListener('error', reveal, { once: true });
+            }
+        });
+
+        // ============ Auto-refresh saat kolase diproses ============
+        {% if not collage_exists %}
+        setTimeout(() => window.location.reload(), 4000);
+        {% endif %}
+
+        // ============ State Follow IG ============
         let pendingAction = null;
-        let igOpenedTime = 0;
+        let countdownInterval = null;
 
         function isFollowed() {
             return localStorage.getItem('haisen_ig_followed') === '1';
         }
 
-        function setFollowed() {
-            localStorage.setItem('haisen_ig_followed', '1');
-        }
-
         function openFollowModal(actionData) {
             pendingAction = actionData;
             const modal = document.getElementById('follow-modal');
-            if (modal) modal.classList.remove('hidden');
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+
+            modal.classList.remove('is-hidden');
+            modal.classList.add('flex');
+
+            backdrop.classList.remove('backdrop-exit');
+            backdrop.classList.add('backdrop-enter');
+
+            content.classList.remove('sheet-exit');
+            content.classList.add('sheet-enter');
         }
 
         function closeFollowModal() {
             const modal = document.getElementById('follow-modal');
-            if (modal) modal.classList.add('hidden');
-            pendingAction = null;
-        }
+            const backdrop = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
 
-        function handleOpenInstagram() {
-            igOpenedTime = Date.now();
-            const btnText = document.getElementById('btn-confirm-text');
-            if (btnText) btnText.innerText = 'Saya Sudah Follow âœ“ (Konfirmasi)';
-        }
+            backdrop.classList.remove('backdrop-enter');
+            backdrop.classList.add('backdrop-exit');
 
-        // Deteksi ketika user kembali dari aplikasi/tab Instagram
-        window.addEventListener('focus', () => {
-            if (igOpenedTime > 0 && Date.now() - igOpenedTime > 2500) {
-                // User baru saja membuka IG dan kembali ke halaman galeri
-                detectFollowSuccess();
-            }
-        });
-
-        function confirmFollowed() {
-            detectFollowSuccess();
-        }
-
-        function detectFollowSuccess() {
-            setFollowed();
-            const badge = document.getElementById('follow-detected-badge');
-            if (badge) badge.classList.remove('hidden');
+            content.classList.remove('sheet-enter');
+            content.classList.add('sheet-exit');
 
             setTimeout(() => {
-                closeFollowModal();
-                if (badge) badge.classList.add('hidden');
-                if (pendingAction) {
-                    const actionToRun = pendingAction;
+                modal.classList.add('is-hidden');
+                modal.classList.remove('flex');
+
+                if (pendingAction !== null) {
+                    clearInterval(countdownInterval);
+                    const confirmBtn = document.getElementById('btn-confirm-follow');
+                    confirmBtn.classList.add('is-hidden');
+                    confirmBtn.disabled = false;
+                    document.getElementById('btn-confirm-text').innerText = 'Saya Sudah Follow';
+                    document.getElementById('btn-open-ig').classList.remove('is-hidden');
                     pendingAction = null;
-                    runAction(actionToRun);
-                } else {
-                    showToast('Follow terkonfirmasi! Silakan pilih aksi foto.');
                 }
-            }, 800);
+            }, 300);
         }
 
+        // ============ Time-gate 5 detik ============
+        function handleOpenInstagram() {
+            const confirmBtn = document.getElementById('btn-confirm-follow');
+            const confirmText = document.getElementById('btn-confirm-text');
+            const openBtn = document.getElementById('btn-open-ig');
+
+            if (!confirmBtn.classList.contains('is-hidden') && confirmBtn.disabled) return;
+
+            openBtn.classList.add('is-hidden');
+            confirmBtn.classList.remove('is-hidden');
+            confirmBtn.disabled = true;
+
+            let timeLeft = 5;
+            confirmText.innerText = 'Memverifikasi (' + timeLeft + 's)...';
+
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    confirmText.innerText = 'Memverifikasi (' + timeLeft + 's)...';
+                } else {
+                    clearInterval(countdownInterval);
+                    confirmBtn.disabled = false;
+                    confirmText.innerText = 'Saya Sudah Follow';
+                }
+            }, 1000);
+        }
+
+        function confirmFollowed() {
+            localStorage.setItem('haisen_ig_followed', '1');
+            const badge = document.getElementById('follow-detected-badge');
+
+            document.getElementById('btn-confirm-follow').classList.add('is-hidden');
+            if (badge) badge.classList.remove('is-hidden');
+
+            setTimeout(() => {
+                const actionToRun = pendingAction;
+                closeFollowModal();
+
+                setTimeout(() => {
+                    if (badge) badge.classList.add('is-hidden');
+                    if (actionToRun) runAction(actionToRun);
+                }, 350);
+            }, 900);
+        }
+
+        // ============ Eksekusi unduhan ============
         function handleActionWithFollow(actionType, url, filename) {
             const actionData = { type: actionType, url: url, filename: filename };
             if (isFollowed()) {
@@ -469,99 +578,36 @@
 
         function runAction(action) {
             if (!action) return;
-            if (action.type === 'share') {
-                executeShare();
-            } else if (action.type === 'download_all') {
+            if (action.type === 'download_all') {
                 executeDownloadAll();
             } else if (action.type === 'download_single') {
                 downloadSingleFile(action.url, action.filename);
-                showToast(`Mengunduh ${action.filename}...`);
+                showToast('Menyiapkan ' + action.filename);
             }
         }
 
-        // Fitur Bagikan Foto
-        async function executeShare() {
-            const collageUrl = "{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) if collage_exists else '' }}";
-            const shareData = {
-                title: 'Haisen Photo Booth',
-                text: 'Lihat keseruan foto kami di Haisen Photo Booth sesi #{{ code }}! Follow @haisen_official âœ¨',
-                url: window.location.href
-            };
-
-            // Coba bagikan file gambar jika didukung oleh browser HP
-            if (collageUrl && navigator.canShare) {
-                try {
-                    showToast('Menyiapkan file foto...');
-                    const res = await fetch(collageUrl);
-                    const blob = await res.blob();
-                    const file = new File([blob], 'haisen_{{ code }}.jpg', { type: blob.type || 'image/jpeg' });
-                    if (navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            files: [file],
-                            title: shareData.title,
-                            text: shareData.text
-                        });
-                        showToast('Foto berhasil dibagikan!');
-                        return;
-                    }
-                } catch (e) {
-                    console.log('File share fallback:', e);
-                }
-            }
-
-            // Fallback ke Web Share URL
-            if (navigator.share) {
-                try {
-                    await navigator.share(shareData);
-                    showToast('Berhasil dibagikan!');
-                } catch (err) {
-                    // Dibatalkan pengguna
-                }
-            } else {
-                // Fallback ke Clipboard
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(window.location.href).then(() => {
-                        showToast('Tautan galeri disalin ke clipboard!');
-                    }).catch(() => {
-                        prompt('Salin link galeri foto kamu:', window.location.href);
-                    });
-                } else {
-                    prompt('Salin link galeri foto kamu:', window.location.href);
-                }
-            }
-        }
-
-        // Fitur Download Semua File (Kolase + Mentah + GIF)
         function executeDownloadAll() {
             const files = [];
             {% if collage_exists %}
-            files.push({ url: "{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}", name: "haisen_{{ code }}_kolase.jpg", label: "Foto Kolase" });
+            files.push({ url: "{{ url_for('api.serve_file', file_type='collages', filename=collage_filename, code=code) }}", name: "haisen_{{ code }}_kolase.jpg" });
             {% endif %}
             {% for raw in raw_photos %}
-            files.push({ url: "{{ url_for('api.serve_file', file_type='temp', filename=raw, code=code) }}", name: "{{ raw }}", label: "Foto Mentah {{ loop.index }}" });
+            files.push({ url: "{{ url_for('api.serve_file', file_type='temp', filename=raw, code=code) }}", name: "{{ raw }}" });
             {% endfor %}
             {% if gif_exists %}
-            files.push({ url: "{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}", name: "haisen_gif_{{ code }}.gif", label: "Animasi GIF" });
+            files.push({ url: "{{ url_for('api.serve_file', file_type='gifs', filename=gif_filename, code=code) }}", name: "haisen_gif_{{ code }}.gif" });
             {% endif %}
 
-            if (files.length === 0) {
-                showToast('Tidak ada file yang tersedia untuk diunduh.');
-                return;
-            }
+            if (files.length === 0) { showToast('Tidak ada file'); return; }
 
-            showToast(`Memulai download ${files.length} file...`);
+            showToast('Memulai unduhan ' + files.length + ' file...');
             files.forEach((file, index) => {
                 setTimeout(() => {
                     downloadSingleFile(file.url, file.name);
-                    showToast(`Mengunduh (${index + 1}/${files.length}): ${file.label}`);
-                    if (index === files.length - 1) {
-                        setTimeout(() => showToast('Semua file berhasil diunduh! ðŸŽ‰'), 1200);
-                    }
-                }, index * 700);
+                }, index * 800);
             });
         }
 
-        // Trigger Download File Satuan
         function downloadSingleFile(url, filename) {
             const a = document.createElement('a');
             a.href = url;
@@ -572,18 +618,18 @@
             document.body.removeChild(a);
         }
 
-        // Toast Feedback
+        // ============ Toast ============
         let toastTimeout = null;
         function showToast(msg) {
             const toast = document.getElementById('toast-notify');
             const text = document.getElementById('toast-text');
             if (!toast || !text) return;
+
             text.innerText = msg;
-            toast.classList.remove('opacity-0', 'translate-y-3', 'pointer-events-none');
+            toast.classList.add('show');
+
             clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-3', 'pointer-events-none');
-            }, 3000);
+            toastTimeout = setTimeout(() => toast.classList.remove('show'), 2800);
         }
     </script>
 </body>

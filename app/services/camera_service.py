@@ -42,14 +42,36 @@ class CameraService:
         # Inisialisasi background loop
         self._ensure_camera_running()
 
+    # def _get_configured_camera_index(self):
+    #     try:
+    #         setting = AppSetting.query.filter_by(key='camera_index').first()
+    #         return int(setting.value) if setting and setting.value and setting.value.isdigit() else 0
+    #     except Exception:
+    #         return 0
+
     def _get_configured_camera_index(self):
+        # Cek apakah variabel 'app' sudah dititipkan ke service ini
+        if not hasattr(self, 'app') or self.app is None:
+            return None
+            
         try:
-            setting = AppSetting.query.filter_by(key='camera_index').first()
-            return int(setting.value) if setting and setting.value and setting.value.isdigit() else 1
-        except Exception:
-            return 1
+            # Gunakan context dari app yang dititipkan
+            with self.app.app_context():
+                setting = AppSetting.query.filter_by(key='camera_index').first()
+                
+                if setting and setting.value and str(setting.value).strip().isdigit():
+                    return int(str(setting.value).strip())
+                
+                return None
+        except Exception as e:
+            print(f"[CameraService] Gagal membaca database: {e}")
+            return None
 
     def _open_camera(self, idx):
+
+        if idx is None:
+            return None
+        
         """Membuka hardware kamera dengan backend Windows (CAP_DSHOW atau default) secara optimal"""
         for backend in [cv2.CAP_DSHOW, None]:
             try:
@@ -133,8 +155,13 @@ class CameraService:
                     else:
                         stream_frame = frame_mirrored
 
-                    # Encode jpeg ringan untuk streaming real-time
-                    ret_enc, buffer = cv2.imencode('.jpg', stream_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                    # # Encode jpeg ringan untuk streaming real-time
+                    # ret_enc, buffer = cv2.imencode('.jpg', stream_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                    # Resize frame preview ke resolusi lebih kecil agar sangat ringan di internet lambat (misal 640x360)
+                    preview_small = cv2.resize(stream_frame, (640, 360), interpolation=cv2.INTER_LINEAR)
+
+                    # Turunkan kualitas JPEG stream dari 80 ke 60 (tidak akan terlalu terlihat bedanya di layar kecil)
+                    ret_enc, buffer = cv2.imencode('.jpg', preview_small, [cv2.IMWRITE_JPEG_QUALITY, 60])
                     
                     with self.thread_lock:
                         # Raw frame tetap bersih untuk resolusi penuh/akurat

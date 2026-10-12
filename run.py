@@ -6,9 +6,12 @@ import socket
 import urllib.request
 from app import create_app
 from extensions import socketio
-from werkzeug.middleware.proxy_fix import ProxyFix  # <-- TAMBAHAN 1
+from werkzeug.middleware.proxy_fix import ProxyFix  
 
 app = create_app()
+
+from app.services.camera_service import CameraService
+CameraService().app = app
 
 # <-- TAMBAHAN 2: Konfigurasi ProxyFix untuk Cloudflare Tunnel -->
 # Ini memaksa Flask untuk menggunakan "https://" saat merender gambar/aset
@@ -53,3 +56,4 @@ if __name__ == '__main__':
     # Jalankan server
     # Tambahkan log_output=True untuk memaksa terminal menampilkan log aktivitas klien
     socketio.run(app, host='0.0.0.0', port=port, debug=True, use_reloader=False, log_output=True)
+    
