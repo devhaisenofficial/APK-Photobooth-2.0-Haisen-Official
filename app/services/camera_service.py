@@ -45,9 +45,9 @@ class CameraService:
     def _get_configured_camera_index(self):
         try:
             setting = AppSetting.query.filter_by(key='camera_index').first()
-            return int(setting.value) if setting and setting.value and setting.value.isdigit() else 0
+            return int(setting.value) if setting and setting.value and setting.value.isdigit() else 1
         except Exception:
-            return 0
+            return 1
 
     def _open_camera(self, idx):
         """Membuka hardware kamera dengan backend Windows (CAP_DSHOW atau default) secara optimal"""

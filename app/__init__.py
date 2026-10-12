@@ -72,6 +72,7 @@ def create_app(config_class=Config):
     from app.blueprints.admin.routes import admin_bp
     from app.blueprints.admin.auth import auth_bp
     from app.blueprints.bilboard.routes import bilboard_bp
+    
 
     app.register_blueprint(host_bp)
     app.register_blueprint(mobile_bp)
@@ -82,7 +83,10 @@ def create_app(config_class=Config):
     app.register_blueprint(bilboard_bp, url_prefix='/bilboard')
 
     from app.blueprints.api.controllers import serve_file
+    app.add_url_rule('/api/files/<file_type>/<filename>', 'api_serve_file', serve_file)
     app.add_url_rule('/files/<file_type>/<filename>', 'root_serve_file', serve_file)
+    # from app.blueprints.api.controllers import serve_file
+    # app.add_url_rule('/files/<file_type>/<filename>', 'root_serve_file', serve_file)
 
     # ==========================================
     # SECURITY FILTER & BLOCKED ROUTES HANDLER
